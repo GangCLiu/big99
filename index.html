@@ -1,0 +1,5391 @@
+<!DOCTYPE html>
+<html lang="zh">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <title>大九九</title>
+  <!-- 内嵌样式文件，合并自原 style(40).css 并做了修改以统一提示框样式等 -->
+  <style>
+:root {
+  --bg: #0b0b0d;
+  --panel: #121317;
+  --panel-2: #17191f;
+  --line: #2b2e36;
+  --line-2: #444852;
+  --text: #f5f5f7;
+  --muted: #aeb4bf;
+  --topbar-h: 76px;
+  --chapter-w: 300px;
+  --chapter-w-collapsed: 64px;
+  --radius: 18px;
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "SF Pro Display", "PingFang SC", "Hiragino Sans GB", "Microsoft YaHei", Arial, sans-serif;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font);
+}
+
+body {
+  overflow: hidden;
+}
+
+button,
+input,
+select {
+  font-family: var(--font);
+}
+
+#topbar {
+  height: var(--topbar-h);
+  width: 100%;
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  padding: 0 24px;
+  background: #080809;
+  border-bottom: 1px solid #20222a;
+}
+
+#top-left {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#app-title {
+  flex: 0 0 auto;
+  font-size: 2rem;
+  font-weight: 750;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+#help-area {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+#help-btn {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: #111318;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#help-tooltip {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  width: min(330px, 82vw);
+  z-index: 2200;
+  padding: 14px 16px;
+  border: 1px solid rgba(245, 245, 247, 0.26);
+  border-radius: 16px;
+  background: rgba(18, 19, 23, 0.96);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+}
+
+#help-area:hover #help-tooltip,
+#help-area.show #help-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.help-title {
+  margin-bottom: 6px;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+#top-actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+#top-actions button,
+#controls button,
+#speedSelect,
+.chapter-toggle {
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  min-height: 46px;
+  padding: 10px 18px;
+  font-size: 1.08rem;
+  font-weight: 650;
+  cursor: pointer;
+}
+
+#top-actions button,
+#controls button {
+  background: #f1f1f4;
+  color: #111318;
+}
+
+#top-actions label {
+  font-size: 1.15rem;
+  white-space: nowrap;
+}
+
+#speedSelect {
+  min-width: 106px;
+  background: #111318;
+  color: var(--text);
+}
+
+button:disabled {
+  background: #4b4f58 !important;
+  color: #9ba0a9 !important;
+  cursor: not-allowed;
+}
+
+#layout {
+  height: calc(100vh - var(--topbar-h));
+  margin-top: var(--topbar-h);
+  display: grid;
+  grid-template-columns: var(--chapter-w) minmax(0, 1fr);
+  gap: 20px;
+  padding: 20px 24px 24px;
+  transition: grid-template-columns 0.18s ease;
+}
+
+body.chapter-collapsed #layout {
+  grid-template-columns: var(--chapter-w-collapsed) minmax(0, 1fr);
+}
+
+#chapter-box,
+#main-panel {
+  min-height: 0;
+  background: var(--panel);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.28);
+}
+
+#chapter-box {
+  overflow: hidden;
+}
+
+.chapter-inner {
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.chapter-head {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  padding: 14px 14px 10px;
+  border-bottom: 1px solid var(--line);
+}
+
+.chapter-title {
+  font-size: 1.12rem;
+  font-weight: 750;
+  white-space: nowrap;
+}
+
+.chapter-toggle {
+  width: 38px;
+  height: 38px;
+  min-height: 38px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: #0e1015;
+  color: var(--text);
+  border-radius: 12px;
+}
+
+.chapter-list {
+  flex: 1;
+  overflow-y: auto;
+  padding: 12px 12px 16px;
+}
+
+.chapter-total {
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-bottom: 12px;
+}
+
+.chapter-item {
+  width: 100%;
+  display: block;
+  text-align: left;
+  padding: 12px 12px;
+  margin-bottom: 10px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: var(--panel-2);
+  color: var(--muted);
+  cursor: pointer;
+}
+
+.chapter-item.active {
+  border-color: #f0f0f3;
+  color: var(--text);
+  background: #20232c;
+}
+
+.chapter-name {
+  font-size: 0.98rem;
+  font-weight: 720;
+  line-height: 1.3;
+}
+
+.chapter-hint {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.chapter-count {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #d5d8de;
+}
+
+body.chapter-collapsed .chapter-head {
+  justify-content: center;
+  padding: 12px 0;
+}
+
+body.chapter-collapsed .chapter-title,
+body.chapter-collapsed .chapter-list {
+  display: none;
+}
+
+body.chapter-collapsed .chapter-toggle {
+  width: 40px;
+  height: 40px;
+}
+
+#main-panel {
+  min-width: 0;
+  overflow: auto;
+  padding: 28px 30px;
+}
+
+.view-block {
+  width: 100%;
+  min-height: 100%;
+}
+
+#practice-view {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: flex-start;
+  padding-top: 24px;
+}
+
+#question {
+  font-size: clamp(2.1rem, 4.3vw, 4.2rem);
+  font-weight: 750;
+  text-align: center;
+  white-space: pre-line;
+  line-height: 1.25;
+  margin: 0 0 24px;
+}
+
+#answer-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: min(520px, 96%);
+}
+
+#answer {
+  flex: 1 1 auto;
+  min-width: 0;
+  font-size: 1.45rem;
+  text-align: center;
+  padding: 13px 16px;
+  background: #0d0f14;
+  color: var(--text);
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  outline: none;
+}
+
+#answer:focus {
+  border-color: #f1f1f4;
+}
+
+#numberPadBtn {
+  flex: 0 0 auto;
+  min-height: 50px;
+  padding: 0 18px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: #f1f1f4;
+  color: #111318;
+  font-size: 1.08rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.number-pad {
+  width: min(310px, 92%);
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #15171d;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+
+.number-pad.hidden {
+  display: none;
+}
+
+.number-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.number-grid button {
+  min-height: 48px;
+  border: 1px solid var(--line-2);
+  border-radius: 13px;
+  background: #f2f2f5;
+  color: #111318;
+  font-size: 1.22rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.number-grid button:nth-child(10),
+.number-grid button:nth-child(12) {
+  font-size: 1rem;
+}
+
+#bar {
+  width: min(820px, 94%);
+  height: 18px;
+  margin-top: 26px;
+  background: #444852;
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+#bar-inner {
+  height: 100%;
+  width: 0%;
+  background: #f5f5f7;
+  transition: width 0.1s linear;
+}
+
+#result {
+  min-height: 2.1em;
+  margin-top: 20px;
+  font-size: 1.38rem;
+  text-align: center;
+}
+
+#controls {
+  display: flex;
+  gap: 16px;
+  align-items: center;
+  justify-content: center;
+}
+
+#review-box {
+  display: none;
+  margin-top: 26px;
+  width: min(860px, 94%);
+  max-height: 32vh;
+  overflow-y: auto;
+  padding: 16px 18px;
+  color: #d6d9df;
+  background: var(--panel-2);
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  font-size: 1.1rem;
+  text-align: center;
+  white-space: pre-wrap;
+}
+
+.view-title {
+  font-size: 1.8rem;
+  font-weight: 750;
+  margin-bottom: 14px;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px 18px;
+  margin-bottom: 18px;
+  color: var(--muted);
+}
+
+.legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.legend-cell {
+  width: 18px;
+  height: 18px;
+  display: inline-block;
+  border: 1px solid #777;
+}
+
+#progressContainer {
+  width: 100%;
+  overflow: auto;
+  padding-bottom: 10px;
+}
+
+.progress-table {
+  border-collapse: separate;
+  border-spacing: 0;
+  min-width: 820px;
+  width: max-content;
+  margin: 0 auto;
+}
+
+.progress-table th,
+.progress-table td {
+  width: 62px;
+  min-width: 62px;
+  height: 58px;
+  padding: 0;
+  text-align: center;
+  vertical-align: middle;
+  border-right: 1px solid #d8d8dd;
+  border-bottom: 1px solid #d8d8dd;
+  user-select: none;
+  font-weight: 650;
+}
+
+.progress-table th {
+  background: #15171c;
+  color: var(--text);
+}
+
+.progress-table thead th {
+  position: sticky;
+  top: 0;
+  z-index: 4;
+}
+
+.progress-table tbody th {
+  position: sticky;
+  left: 0;
+  z-index: 3;
+}
+
+.progress-table thead tr:first-child th:first-child {
+  left: 0;
+  z-index: 5;
+}
+
+.progress-table tr:first-child th,
+.progress-table tr:first-child td,
+.progress-table thead tr:nth-child(2) th {
+  border-top: 1px solid #d8d8dd;
+}
+
+.progress-table tr th:first-child,
+.progress-table tr td:first-child {
+  border-left: 1px solid #d8d8dd;
+}
+
+.cell-not-done,
+.cell-level1,
+.cell-level2 {
+  color: transparent;
+}
+
+.cell-level3 {
+  color: #101114;
+}
+
+.cell-not-done { background: #000; }
+.cell-level1   { background: #3c3f46; }
+.cell-level2   { background: #8b9098; }
+.cell-level3   { background: #f5f5f7; }
+
+@media (max-width: 900px) {
+  body {
+    overflow: auto;
+  }
+
+  #topbar {
+    position: sticky;
+    height: auto;
+    min-height: var(--topbar-h);
+    align-items: flex-start;
+    flex-direction: column;
+    padding: 14px 16px;
+  }
+
+  #top-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  #layout {
+    margin-top: 0;
+    height: auto;
+    min-height: calc(100vh - var(--topbar-h));
+    grid-template-columns: 1fr;
+    padding: 16px;
+  }
+
+  body.chapter-collapsed #layout {
+    grid-template-columns: 1fr;
+  }
+
+  #chapter-box {
+    min-height: 56px;
+  }
+
+  body.chapter-collapsed #chapter-box {
+    height: 56px;
+  }
+
+  body.chapter-collapsed .chapter-head {
+    justify-content: space-between;
+    padding: 8px 12px;
+  }
+
+  body.chapter-collapsed .chapter-title {
+    display: block;
+  }
+
+  #main-panel {
+    min-height: 62vh;
+    padding: 22px 14px;
+  }
+
+  #top-actions button,
+  #controls button,
+  #speedSelect {
+    min-height: 42px;
+    padding: 9px 14px;
+    font-size: 1rem;
+  }
+
+  .progress-table {
+    min-width: 760px;
+  }
+}
+
+@media (max-width: 520px) {
+  #app-title {
+    font-size: 1.55rem;
+  }
+
+  #question {
+    font-size: clamp(2rem, 12vw, 3.2rem);
+  }
+
+  #controls {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* === 章节通关标记 ===================================== */
+.chapter-item.passed {
+  border-color: rgba(245, 245, 247, 0.62);
+}
+
+.chapter-name-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.chapter-pass-badge {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid rgba(245, 245, 247, 0.68);
+  border-radius: 999px;
+  color: #f5f5f7;
+  background: rgba(245, 245, 247, 0.08);
+  font-size: 0.72rem;
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+/* === 章节通关动画 ===================================== */
+#chapter-clear-toast {
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  pointer-events: none;
+  opacity: 0;
+  transform: scale(0.98);
+  transition: opacity 0.28s ease, transform 0.28s ease;
+}
+
+#chapter-clear-toast.show {
+  opacity: 1;
+  transform: scale(1);
+}
+
+.clear-card {
+  min-width: 260px;
+  padding: 30px 34px 28px;
+  text-align: center;
+  border: 1px solid rgba(245, 245, 247, 0.35);
+  border-radius: 24px;
+  background: rgba(18, 19, 23, 0.86);
+  box-shadow: 0 22px 80px rgba(0, 0, 0, 0.55);
+  backdrop-filter: blur(18px);
+  animation: clearCardIn 1.65s ease both;
+}
+
+.clear-mark {
+  width: 72px;
+  height: 72px;
+  margin: 0 auto 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 999px;
+  background: #f5f5f7;
+  color: #101114;
+  font-size: 3rem;
+  font-weight: 850;
+  animation: clearMarkPop 0.62s cubic-bezier(0.2, 1.15, 0.28, 1) both;
+}
+
+.clear-title {
+  font-size: 1.85rem;
+  font-weight: 820;
+  letter-spacing: 0.03em;
+}
+
+.clear-name {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+@keyframes clearMarkPop {
+  0% {
+    transform: scale(0.55);
+    opacity: 0;
+  }
+  55% {
+    transform: scale(1.08);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes clearCardIn {
+  0% {
+    opacity: 0;
+    transform: translateY(16px) scale(0.96);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  82% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.98);
+  }
+}
+
+@media (max-width: 520px) {
+  .chapter-pass-badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+
+  .clear-card {
+    min-width: 230px;
+    padding: 26px 28px 24px;
+  }
+}
+
+
+@media (max-width: 900px) {
+  #top-left {
+    width: 100%;
+  }
+
+  #help-tooltip {
+    left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  #answer-area {
+    width: 100%;
+    gap: 8px;
+  }
+
+  #numberPadBtn {
+    min-height: 48px;
+    padding: 0 14px;
+    font-size: 1rem;
+  }
+
+  .number-pad {
+    width: min(300px, 96%);
+  }
+
+  .number-grid button {
+    min-height: 46px;
+    font-size: 1.12rem;
+  }
+}
+
+
+/* === v5 顶栏问号提示 ===================================== */
+#top-left {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-width: 0;
+}
+
+#help-area {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+#help-btn {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  border: 1px solid var(--line-2);
+  background: #111318;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+#help-tooltip {
+  position: absolute;
+  top: 44px;
+  left: 0;
+  width: min(340px, 84vw);
+  z-index: 2200;
+  padding: 14px 16px;
+  border: 1px solid rgba(245, 245, 247, 0.26);
+  border-radius: 16px;
+  background: rgba(18, 19, 23, 0.96);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+}
+
+#help-area:hover #help-tooltip,
+#help-area.show #help-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.help-title {
+  margin-bottom: 6px;
+  font-weight: 800;
+  font-size: 1rem;
+}
+
+/* === v5 数字九宫格 ===================================== */
+#answer-area {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  width: min(520px, 96%);
+}
+
+#answer {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#numberPadBtn {
+  flex: 0 0 auto;
+  min-height: 50px;
+  padding: 0 18px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: #f1f1f4;
+  color: #111318;
+  font-size: 1.08rem;
+  font-weight: 750;
+  cursor: pointer;
+}
+
+.number-pad {
+  width: min(310px, 92%);
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 18px;
+  background: #15171d;
+  box-shadow: 0 14px 40px rgba(0, 0, 0, 0.35);
+}
+
+.number-pad.hidden {
+  display: none;
+}
+
+.number-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+}
+
+.number-grid button {
+  min-height: 48px;
+  border: 1px solid var(--line-2);
+  border-radius: 13px;
+  background: #f2f2f5;
+  color: #111318;
+  font-size: 1.22rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.number-grid button:nth-child(10),
+.number-grid button:nth-child(12) {
+  font-size: 1rem;
+}
+
+/* === v5 章节锁定 ===================================== */
+.chapter-item {
+  position: relative;
+  overflow: hidden;
+}
+
+.chapter-item.locked {
+  color: #7f8590;
+  border-color: rgba(127, 133, 144, 0.34);
+  background: #111319;
+  cursor: pointer;
+}
+
+.chapter-item.locked .chapter-hint,
+.chapter-item.locked .chapter-count {
+  opacity: 0.48;
+}
+
+.chapter-lock-badge {
+  flex: 0 0 auto;
+  padding: 3px 7px;
+  border: 1px solid rgba(174, 180, 191, 0.32);
+  border-radius: 999px;
+  color: #aeb4bf;
+  background: rgba(245, 245, 247, 0.04);
+  font-size: 0.72rem;
+  font-weight: 720;
+  white-space: nowrap;
+}
+
+.chapter-lock-mask {
+  margin-top: 8px;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: linear-gradient(135deg, rgba(245,245,247,0.10), rgba(245,245,247,0.02));
+  color: #c9ced8;
+  font-size: 0.78rem;
+  text-align: center;
+}
+
+#soft-toast {
+  position: fixed;
+  left: 50%;
+  top: calc(var(--topbar-h) + 22px);
+  z-index: 2800;
+  padding: 12px 18px;
+  border: 1px solid rgba(245, 245, 247, 0.24);
+  border-radius: 999px;
+  background: rgba(18, 19, 23, 0.94);
+  color: var(--text);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.46);
+  transform: translate(-50%, -8px);
+  opacity: 0;
+  pointer-events: none;
+}
+
+#soft-toast.show {
+  animation: softToastFade 1.5s ease both;
+}
+
+@keyframes softToastFade {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+  18% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  78% {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(-50%, -8px);
+  }
+}
+
+/* === v5 通关动画：按难度递进 ===================================== */
+.clear-card {
+  position: relative;
+  overflow: hidden;
+}
+
+.clear-ring {
+  position: absolute;
+  inset: 18px;
+  border-radius: 999px;
+  border: 1px solid rgba(245, 245, 247, 0.18);
+  opacity: 0;
+}
+
+.clear-card.level-2 .clear-ring,
+.clear-card.level-3 .clear-ring {
+  animation: clearRingPulse 1.25s ease-out both;
+}
+
+.clear-card.level-3 {
+  border-color: rgba(245, 245, 247, 0.58);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.72);
+}
+
+.clear-level {
+  margin-top: 6px;
+  font-size: 1.05rem;
+  font-weight: 760;
+  color: #f5f5f7;
+}
+
+.clear-particles {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.clear-particle {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 6px;
+  height: 6px;
+  border-radius: 999px;
+  background: #f5f5f7;
+  opacity: 0;
+}
+
+.level-2 .clear-particle,
+.level-3 .clear-particle {
+  animation: particleFly 1.2s ease-out both;
+}
+
+.p1 { --x: -92px; --y: -54px; }
+.p2 { --x: -66px; --y: 62px; }
+.p3 { --x: 70px; --y: -58px; }
+.p4 { --x: 96px; --y: 50px; }
+.p5 { --x: -112px; --y: 4px; }
+.p6 { --x: 112px; --y: -4px; }
+.p7 { --x: -22px; --y: -90px; }
+.p8 { --x: 24px; --y: 90px; }
+.p9 { --x: -122px; --y: -88px; }
+.p10 { --x: 122px; --y: 88px; }
+.p11 { --x: 0px; --y: -118px; }
+.p12 { --x: 0px; --y: 118px; }
+.p13 { --x: -148px; --y: 28px; }
+.p14 { --x: 148px; --y: -28px; }
+.p15 { --x: -84px; --y: 112px; }
+.p16 { --x: 84px; --y: -112px; }
+.p17 { --x: -150px; --y: -22px; }
+.p18 { --x: 150px; --y: 22px; }
+
+@keyframes clearRingPulse {
+  0% {
+    opacity: 0.55;
+    transform: scale(0.72);
+  }
+  100% {
+    opacity: 0;
+    transform: scale(1.32);
+  }
+}
+
+@keyframes particleFly {
+  0% {
+    opacity: 0;
+    transform: translate(-50%, -50%) scale(0.4);
+  }
+  18% {
+    opacity: 1;
+  }
+  100% {
+    opacity: 0;
+    transform: translate(calc(-50% + var(--x)), calc(-50% + var(--y))) scale(1);
+  }
+}
+
+@media (max-width: 900px) {
+  #top-left {
+    width: 100%;
+  }
+
+  #help-tooltip {
+    left: 0;
+  }
+}
+
+@media (max-width: 520px) {
+  #answer-area {
+    width: 100%;
+    gap: 8px;
+  }
+
+  #numberPadBtn {
+    min-height: 48px;
+    padding: 0 14px;
+    font-size: 1rem;
+  }
+
+  .number-pad {
+    width: min(300px, 96%);
+  }
+
+  .number-grid button {
+    min-height: 46px;
+    font-size: 1.12rem;
+  }
+
+  .chapter-lock-badge,
+  .chapter-pass-badge {
+    font-size: 0.68rem;
+    padding: 2px 6px;
+  }
+}
+
+
+/* === v6 高级滚动条与切换动效 ===================================== */
+* {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(245,245,247,0.38) rgba(245,245,247,0.06);
+}
+
+*::-webkit-scrollbar {
+  width: 10px;
+  height: 10px;
+}
+
+*::-webkit-scrollbar-track {
+  background: rgba(245,245,247,0.045);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb {
+  background: linear-gradient(180deg, rgba(245,245,247,0.52), rgba(245,245,247,0.22));
+  border: 2px solid rgba(16,17,20,0.88);
+  border-radius: 999px;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+  background: linear-gradient(180deg, rgba(245,245,247,0.72), rgba(245,245,247,0.34));
+}
+
+*::-webkit-scrollbar-corner {
+  background: transparent;
+}
+
+#chapter-box,
+#main-panel,
+#review-box,
+#progressContainer {
+  scroll-behavior: smooth;
+}
+
+#main-panel.view-animate .view-block {
+  animation: viewFadeIn 0.26s cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+@keyframes viewFadeIn {
+  0% {
+    opacity: 0;
+    transform: translateY(8px) scale(0.996);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === v6 错题巩固显示 ===================================== */
+#review-box {
+  text-align: left;
+}
+
+.review-tip {
+  width: 100%;
+  margin: 0 auto 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(245,245,247,0.16);
+  border-radius: 14px;
+  background: rgba(245,245,247,0.055);
+  color: #d7dbe3;
+  font-size: 0.98rem;
+  line-height: 1.55;
+  text-align: left;
+}
+
+.wrong-list {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.wrong-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 12px 14px;
+  border: 1px solid rgba(245,245,247,0.14);
+  border-radius: 14px;
+  background: rgba(0,0,0,0.18);
+}
+
+.wrong-problem {
+  font-size: 1.18rem;
+  font-weight: 760;
+  color: #f5f5f7;
+  letter-spacing: 0.02em;
+}
+
+.wrong-state {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.wrong-level {
+  min-width: 42px;
+  padding: 4px 8px;
+  border: 1px solid rgba(245,245,247,0.22);
+  border-radius: 999px;
+  color: #dce0e8;
+  font-size: 0.82rem;
+  font-weight: 720;
+  text-align: center;
+}
+
+.wrong-dots {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.wrong-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 999px;
+  display: inline-block;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.16) inset, 0 0 10px rgba(255,255,255,0.06);
+  transition: transform 0.18s ease, opacity 0.18s ease;
+}
+
+.wrong-dot.red {
+  background: #ff4d4f;
+}
+
+.wrong-dot.orange {
+  background: #ff9f1a;
+}
+
+.wrong-dot.yellow {
+  background: #ffd43b;
+}
+
+.wrong-dot.gone {
+  opacity: 0.13;
+  transform: scale(0.72);
+  background: transparent;
+}
+
+.wrong-dot.active {
+  opacity: 1;
+  transform: scale(1);
+}
+
+/* === v6 软提示复用：无错题与未解锁一致 ===================================== */
+#soft-toast {
+  backdrop-filter: blur(16px);
+}
+
+/* === v6 响应式错题列表 ===================================== */
+@media (max-width: 520px) {
+  .wrong-row {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .wrong-state {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .review-tip {
+    font-size: 0.9rem;
+  }
+}
+
+
+/* === v7 练习进度条 ===================================== */
+#practice-progress-block {
+  width: min(820px, 94%);
+  margin: -8px 0 22px;
+}
+
+.practice-progress-top {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  min-height: 24px;
+  color: var(--muted);
+  font-size: 0.96rem;
+  font-weight: 650;
+}
+
+#practice-progress-delta {
+  min-width: 42px;
+  text-align: left;
+  opacity: 0;
+  transform: translateY(4px);
+  font-weight: 850;
+}
+
+#practice-progress-delta.show {
+  animation: progressDeltaFade 1.15s ease both;
+}
+
+#practice-progress-delta.positive {
+  color: #f5f5f7;
+}
+
+#practice-progress-delta.negative {
+  color: #9ca3af;
+}
+
+#practice-progress-bar {
+  height: 12px;
+  margin-top: 8px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #272a31;
+  border: 1px solid rgba(245, 245, 247, 0.06);
+}
+
+#practice-progress-inner {
+  height: 100%;
+  width: 0%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f5f5f7, #aeb4bf);
+  transition: width 0.34s ease;
+}
+
+@keyframes progressDeltaFade {
+  0% {
+    opacity: 0;
+    transform: translateY(5px) scale(0.96);
+  }
+  18% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  76% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-5px) scale(0.98);
+  }
+}
+
+/* === v7 开始确认提示 ===================================== */
+.start-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 3200;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.42);
+  backdrop-filter: blur(8px);
+}
+
+.start-confirm.hidden {
+  display: none;
+}
+
+.start-confirm-card {
+  width: min(360px, 88vw);
+  padding: 26px 26px 22px;
+  text-align: center;
+  border: 1px solid rgba(245, 245, 247, 0.28);
+  border-radius: 24px;
+  background: rgba(18, 19, 23, 0.95);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.56);
+  animation: startConfirmIn 0.18s ease both;
+}
+
+.start-confirm-title {
+  font-size: 1.65rem;
+  font-weight: 850;
+}
+
+.start-confirm-text {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+.start-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+.start-confirm-actions button {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: #f1f1f4;
+  color: #111318;
+  font-size: 1rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.start-confirm-actions button:first-child {
+  background: #111318;
+  color: var(--text);
+}
+
+@keyframes startConfirmIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* === v7 进度查询筛选 ===================================== */
+.progress-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 12px;
+}
+
+.progress-filter {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+#progressFilterSelect {
+  min-height: 40px;
+  min-width: 150px;
+  padding: 8px 12px;
+  border: 1px solid var(--line-2);
+  border-radius: 12px;
+  background: #111318;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 650;
+}
+
+#progressSummary {
+  margin-bottom: 16px;
+}
+
+.progress-summary-card {
+  padding: 14px 16px;
+  border: 1px solid var(--line);
+  border-radius: 16px;
+  background: var(--panel-2);
+}
+
+.progress-summary-top {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 10px;
+  color: var(--text);
+  font-size: 1rem;
+  font-weight: 750;
+}
+
+.progress-summary-bar {
+  height: 13px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: #2a2e36;
+}
+
+.progress-summary-bar > div {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(90deg, #f5f5f7, #9fa6b2);
+  transition: width 0.28s ease;
+}
+
+.progress-table td.progress-lowlight {
+  opacity: 0.22;
+  filter: grayscale(0.8);
+}
+
+.progress-table td.progress-selected {
+  position: relative;
+  box-shadow: inset 0 0 0 3px rgba(245, 245, 247, 0.95);
+  z-index: 1;
+}
+
+.progress-table td.progress-empty {
+  background: transparent;
+  opacity: 0.18;
+}
+
+@media (max-width: 720px) {
+  .progress-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .progress-filter {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  #progressFilterSelect {
+    flex: 1 1 auto;
+  }
+
+  #practice-progress-block {
+    width: 100%;
+  }
+
+  .practice-progress-top {
+    flex-wrap: wrap;
+  }
+}
+
+
+/* === v8 布局微调：进度条在标题上方，仅显示百分比 ===================================== */
+#practice-view {
+  padding-top: 18px;
+}
+
+#practice-progress-block {
+  width: min(820px, 94%);
+  margin: 0 auto 28px;
+}
+
+.practice-progress-top {
+  justify-content: center;
+  margin-top: 10px;
+}
+
+#practice-progress-label {
+  font-size: 1.05rem;
+  font-weight: 760;
+  color: var(--muted);
+}
+
+#practice-progress-bar {
+  height: 14px;
+  margin-top: 0;
+}
+
+#question {
+  margin-top: 0;
+  margin-bottom: 28px;
+}
+
+#progress-view {
+  padding-top: 8px;
+}
+
+.progress-head {
+  align-items: center;
+  margin-bottom: 18px;
+}
+
+.progress-head .view-title {
+  margin-bottom: 0;
+  font-size: clamp(2rem, 5vw, 4.2rem);
+  line-height: 1.08;
+}
+
+.progress-filter {
+  margin-left: auto;
+}
+
+#progressSummary {
+  margin-bottom: 18px;
+}
+
+.progress-summary-card {
+  padding: 16px 18px;
+}
+
+.progress-summary-top {
+  font-size: 1.08rem;
+}
+
+.progress-table td.progress-lowlight {
+  opacity: 0.14;
+  filter: grayscale(0.95);
+}
+
+.progress-table td.progress-selected {
+  box-shadow: inset 0 0 0 3px rgba(245, 245, 247, 1);
+}
+
+@media (max-width: 720px) {
+  .progress-head .view-title {
+    font-size: clamp(2rem, 12vw, 3.2rem);
+  }
+
+  .progress-filter {
+    margin-left: 0;
+  }
+
+  #practice-progress-block {
+    width: 100%;
+  }
+}
+
+
+/* === v9 修复：初始进度按章节三阶进度显示，错题题目标记 ===================================== */
+#question {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  max-width: min(920px, 96%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.question-main {
+  display: inline-block;
+}
+
+.question-badge {
+  position: absolute;
+  right: -58px;
+  top: 0.08em;
+  padding: 4px 8px;
+  border: 1px solid rgba(245, 245, 247, 0.36);
+  border-radius: 999px;
+  background: rgba(245, 245, 247, 0.08);
+  color: var(--muted);
+  font-size: clamp(0.72rem, 1.2vw, 0.95rem);
+  font-weight: 820;
+  letter-spacing: 0.04em;
+  white-space: nowrap;
+}
+
+#question.question-wrong .question-main {
+  text-shadow: 0 0 18px rgba(245, 245, 247, 0.08);
+}
+
+@media (max-width: 720px) {
+  #question {
+    padding-right: 0;
+  }
+
+  .question-badge {
+    position: static;
+    transform: translateY(-0.9em);
+    font-size: 0.72rem;
+  }
+}
+
+
+/* === v10 百分比两位小数与连击提示 ===================================== */
+#practice-progress-delta {
+  min-width: 160px;
+  white-space: nowrap;
+  font-variant-numeric: tabular-nums;
+}
+
+#practice-progress-label,
+.progress-summary-top span:last-child {
+  font-variant-numeric: tabular-nums;
+}
+
+
+/* === v11：难度权重、居中与错题计时修正 ===================================== */
+#practice-view {
+  align-items: center;
+}
+
+#question {
+  width: 100%;
+  justify-content: center;
+  text-align: center;
+}
+
+#answer-area {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#bar {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#controls {
+  width: 100%;
+}
+
+#review-box {
+  display: block;
+  width: min(900px, 94%);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#review-box:empty {
+  display: none;
+}
+
+
+/* === v12：修正主区对齐、错题库位置、完成标记显示 ===================================== */
+
+/* 主练习区域让标题、输入框、计时条同轴居中 */
+#practice-view {
+  align-items: center !important;
+}
+
+#question {
+  width: 100%;
+  justify-content: center !important;
+  text-align: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 输入框本身居中，数字按钮挂在输入框右侧，不参与整体居中计算 */
+#answer-area {
+  position: relative;
+  width: min(720px, 96%);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#answer {
+  flex: 0 1 auto;
+  width: min(560px, 78vw);
+  margin-left: auto;
+  margin-right: auto;
+}
+
+#numberPadBtn {
+  position: absolute;
+  left: calc(50% + min(560px, 78vw) / 2 + 18px);
+  top: 50%;
+  transform: translateY(-50%);
+}
+
+#bar,
+#practice-progress-block {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+/* 错题巩固：错题库显示在“提交/开始”按钮下方 */
+body.mode-review #review-box {
+  display: block !important;
+  order: 8;
+  width: min(760px, 94%);
+  max-height: 34vh;
+  margin: 22px auto 0;
+  text-align: left;
+}
+
+body.mode-review #answer-area {
+  order: 3;
+}
+
+body.mode-review #number-pad {
+  order: 4;
+}
+
+body.mode-review #bar {
+  order: 5;
+}
+
+body.mode-review #result {
+  order: 6;
+}
+
+body.mode-review #controls {
+  order: 7;
+}
+
+body.mode-review #question {
+  order: 1;
+}
+
+body.mode-review .wrong-list {
+  max-height: 24vh;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+/* 防止空错题框露出来 */
+#review-box:empty {
+  display: none !important;
+}
+
+@media (max-width: 900px) {
+  #answer {
+    width: min(520px, 72vw);
+  }
+
+  #numberPadBtn {
+    left: calc(50% + min(520px, 72vw) / 2 + 12px);
+  }
+}
+
+@media (max-width: 640px) {
+  #answer-area {
+    width: 100%;
+    gap: 8px;
+  }
+
+  #answer {
+    width: calc(100% - 92px);
+    margin-left: 0;
+    margin-right: 0;
+  }
+
+  #numberPadBtn {
+    position: static;
+    transform: none;
+  }
+}
+
+
+/* === v13：100以内合数修正 + 进度文字居中 + 数字按钮加宽 ===================================== */
+
+/* 进度条和文字同轴居中；右侧变化值不参与居中计算 */
+#practice-progress-block {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+#practice-progress-bar {
+  width: 100%;
+}
+
+.practice-progress-top {
+  position: relative;
+  width: 100%;
+  display: flex;
+  justify-content: center !important;
+  align-items: center;
+}
+
+#practice-progress-label {
+  display: block;
+  width: 100%;
+  text-align: center;
+}
+
+#practice-progress-delta {
+  position: absolute;
+  left: calc(50% + 165px);
+  top: 50%;
+  transform: translateY(-50%);
+  min-width: 190px;
+  text-align: left;
+}
+
+/* 数字按钮加宽，防止“数字”竖排或换行；不改变倒计时条位置 */
+#numberPadBtn {
+  width: 112px;
+  min-width: 112px;
+  white-space: nowrap;
+  writing-mode: horizontal-tb;
+  text-orientation: mixed;
+  text-align: center;
+  line-height: 1;
+}
+
+@media (max-width: 720px) {
+  #practice-progress-delta {
+    position: static;
+    transform: none;
+    width: 100%;
+    text-align: center;
+    margin-top: 4px;
+  }
+
+  #numberPadBtn {
+    width: 88px;
+    min-width: 88px;
+  }
+}
+
+
+/* === v14：间隔暂停、进度算法提示、左上角操作整理 ===================================== */
+#top-left {
+  padding: 8px 10px 8px 14px;
+  border: 1px solid rgba(245, 245, 247, 0.10);
+  border-radius: 18px;
+  background: rgba(245, 245, 247, 0.045);
+  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+}
+
+#app-title {
+  font-size: 1.78rem;
+  letter-spacing: 0.06em;
+}
+
+#help-area {
+  order: 2;
+}
+
+#help-btn {
+  width: auto;
+  height: 34px;
+  min-height: 34px;
+  padding: 0 12px;
+  border-radius: 999px;
+  background: #f1f1f4;
+  color: #111318;
+  font-size: 0.92rem;
+  font-weight: 850;
+  letter-spacing: 0.04em;
+}
+
+#help-tooltip {
+  top: 46px;
+  left: auto;
+  right: 0;
+  width: min(380px, 86vw);
+  padding: 16px;
+}
+
+.help-grid {
+  display: grid;
+  gap: 9px;
+}
+
+.help-grid > div {
+  display: grid;
+  grid-template-columns: 54px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 8px 10px;
+  border-radius: 12px;
+  background: rgba(245, 245, 247, 0.045);
+}
+
+.help-grid b {
+  color: #f5f5f7;
+  font-size: 0.88rem;
+}
+
+.help-grid span {
+  color: #cdd2dc;
+  font-size: 0.88rem;
+  line-height: 1.45;
+}
+
+#pauseBtn {
+  background: #111318 !important;
+  color: var(--text) !important;
+  border-color: rgba(245, 245, 247, 0.36) !important;
+}
+
+#pauseBtn[hidden] {
+  display: none !important;
+}
+
+.pause-confirm {
+  position: fixed;
+  inset: 0;
+  z-index: 3300;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.46);
+  backdrop-filter: blur(9px);
+}
+
+.pause-confirm.hidden {
+  display: none;
+}
+
+.pause-confirm-card {
+  width: min(380px, 88vw);
+  padding: 26px 26px 22px;
+  text-align: center;
+  border: 1px solid rgba(245, 245, 247, 0.30);
+  border-radius: 24px;
+  background: rgba(18, 19, 23, 0.96);
+  box-shadow: 0 26px 90px rgba(0, 0, 0, 0.58);
+  animation: startConfirmIn 0.18s ease both;
+}
+
+.pause-confirm-title {
+  font-size: 1.55rem;
+  font-weight: 850;
+}
+
+.pause-confirm-text {
+  margin-top: 8px;
+  color: var(--muted);
+  font-size: 1rem;
+  font-weight: 650;
+  line-height: 1.55;
+}
+
+.pause-confirm-actions {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  margin-top: 22px;
+}
+
+.pause-confirm-actions button {
+  min-height: 44px;
+  padding: 10px 18px;
+  border: 1px solid var(--line-2);
+  border-radius: 14px;
+  background: #f1f1f4;
+  color: #111318;
+  font-size: 1rem;
+  font-weight: 760;
+  cursor: pointer;
+}
+
+.pause-confirm-actions button:first-child {
+  background: #111318;
+  color: var(--text);
+}
+
+#progress-info-area {
+  position: absolute;
+  top: -2px;
+  right: -46px;
+  z-index: 20;
+}
+
+#progressInfoBtn {
+  width: 28px;
+  height: 28px;
+  min-height: 28px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245, 245, 247, 0.34);
+  border-radius: 999px;
+  background: #111318;
+  color: var(--text);
+  font-size: 0.9rem;
+  font-weight: 850;
+  cursor: pointer;
+}
+
+#progressInfoTooltip {
+  position: absolute;
+  top: 38px;
+  right: 0;
+  width: min(420px, 86vw);
+  padding: 14px 16px;
+  border: 1px solid rgba(245, 245, 247, 0.22);
+  border-radius: 16px;
+  background: rgba(18, 19, 23, 0.97);
+  color: #d7dbe3;
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+  font-size: 0.9rem;
+  line-height: 1.55;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+}
+
+#progress-info-area:hover #progressInfoTooltip,
+#progress-info-area.show #progressInfoTooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.progress-info-title {
+  margin-bottom: 7px;
+  color: #f5f5f7;
+  font-size: 1rem;
+  font-weight: 850;
+}
+
+#progressInfoTooltip div:not(.progress-info-title) + div {
+  margin-top: 6px;
+}
+
+@media (max-width: 900px) {
+  #top-left {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  #help-tooltip {
+    left: auto;
+    right: 0;
+  }
+
+  #progress-info-area {
+    right: 0;
+    top: -38px;
+  }
+}
+
+@media (max-width: 520px) {
+  #top-left {
+    padding: 7px 8px 7px 12px;
+  }
+
+  #app-title {
+    font-size: 1.42rem;
+  }
+
+  #help-btn {
+    height: 32px;
+    min-height: 32px;
+    padding: 0 10px;
+    font-size: 0.84rem;
+  }
+
+  .help-grid > div {
+    grid-template-columns: 46px minmax(0, 1fr);
+    padding: 7px 8px;
+  }
+
+  .pause-confirm-actions {
+    flex-direction: column;
+  }
+}
+
+
+/* === v15：提示框修正与问号样式回退 ===================================== */
+#top-left {
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  overflow: visible;
+}
+
+#help-area {
+  order: 0;
+  position: relative;
+  overflow: visible;
+}
+
+#help-btn {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border-radius: 999px;
+  background: #111318;
+  color: var(--text);
+  font-size: 1.05rem;
+  font-weight: 850;
+  letter-spacing: 0;
+}
+
+#help-tooltip {
+  top: 44px;
+  left: 0;
+  right: auto;
+  width: min(360px, calc(100vw - 36px));
+  z-index: 4200;
+}
+
+.help-title,
+.progress-info-title {
+  font-weight: 900;
+}
+
+.help-grid b,
+#progressInfoTooltip b {
+  font-weight: 900;
+}
+
+#progressInfoTooltip div:not(.progress-info-title) {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+#progressInfoTooltip b {
+  color: #f5f5f7;
+}
+
+#progressInfoTooltip span {
+  color: #d7dbe3;
+}
+
+@media (max-width: 900px) {
+  #top-left {
+    width: 100%;
+    justify-content: flex-start;
+  }
+
+  #help-tooltip {
+    left: 0;
+    right: auto;
+  }
+}
+
+
+/* === v16：开始前唯一按钮、进度条浮现、章节说明蒙版 ===================================== */
+body.before-start #submitBtn,
+body.before-start #pauseBtn {
+  display: none !important;
+}
+
+body.before-start #nextBtn {
+  min-width: 188px;
+  padding: 14px 34px;
+  font-size: 1.45rem;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  white-space: pre;
+}
+
+body.before-start #controls {
+  margin-top: 8px;
+}
+
+#practice-progress-block {
+  transition: opacity 0.28s ease, transform 0.28s ease, max-height 0.28s ease, margin 0.28s ease;
+  max-height: 110px;
+}
+
+body.before-start #practice-progress-block {
+  max-height: 0;
+  margin-top: 0 !important;
+  margin-bottom: 0 !important;
+  opacity: 0;
+  transform: translateY(-8px);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body.practice-started #practice-progress-block {
+  max-height: 110px;
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.chapter-main-title {
+  display: inline-block;
+  max-width: min(980px, 96%);
+  padding: 10px 22px;
+  border: 1px solid transparent;
+  border-radius: 22px;
+  background: transparent;
+  color: var(--text);
+  font: inherit;
+  font-weight: 850;
+  line-height: 1.18;
+  cursor: pointer;
+  transition: background 0.16s ease, border-color 0.16s ease, box-shadow 0.16s ease, transform 0.16s ease;
+}
+
+.chapter-main-title:hover,
+.chapter-main-title:focus-visible {
+  border-color: rgba(245, 245, 247, 0.34);
+  background: rgba(245, 245, 247, 0.075);
+  box-shadow: 0 14px 42px rgba(0, 0, 0, 0.22), inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  outline: none;
+  transform: translateY(-1px);
+}
+
+.chapter-info-modal {
+  position: fixed;
+  inset: 0;
+  z-index: 4400;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 22px;
+  background: rgba(0, 0, 0, 0.58);
+  backdrop-filter: blur(10px);
+}
+
+.chapter-info-modal.hidden {
+  display: none;
+}
+
+.chapter-info-card {
+  position: relative;
+  width: min(720px, 92vw);
+  max-height: min(78vh, 720px);
+  overflow-y: auto;
+  padding: 30px 34px 28px;
+  border: 1px solid rgba(245, 245, 247, 0.28);
+  border-radius: 26px;
+  background: rgba(18, 19, 23, 0.97);
+  box-shadow: 0 30px 100px rgba(0, 0, 0, 0.66);
+  animation: startConfirmIn 0.18s ease both;
+}
+
+.chapter-info-close {
+  position: absolute;
+  top: 16px;
+  right: 16px;
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  border: 1px solid rgba(245, 245, 247, 0.26);
+  border-radius: 999px;
+  background: #111318;
+  color: var(--text);
+  font-size: 1.35rem;
+  font-weight: 800;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.chapter-info-title {
+  padding-right: 44px;
+  color: #f5f5f7;
+  font-size: clamp(1.7rem, 4vw, 2.6rem);
+  font-weight: 900;
+  letter-spacing: 0.03em;
+  line-height: 1.14;
+}
+
+.chapter-info-body {
+  margin-top: 18px;
+  color: #d7dbe3;
+  font-size: 1.06rem;
+  line-height: 1.72;
+}
+
+.chapter-info-body p {
+  margin: 10px 0;
+}
+
+.chapter-info-body b {
+  color: #f5f5f7;
+  font-weight: 900;
+}
+
+.chapter-formula {
+  margin: 14px 0;
+  padding: 12px 14px;
+  border: 1px solid rgba(245, 245, 247, 0.14);
+  border-radius: 16px;
+  background: rgba(245, 245, 247, 0.055);
+  overflow-x: auto;
+}
+
+@media (max-width: 520px) {
+  body.before-start #nextBtn {
+    min-width: 160px;
+    padding: 12px 26px;
+    font-size: 1.24rem;
+  }
+
+  .chapter-info-card {
+    padding: 26px 20px 22px;
+  }
+
+  .chapter-info-body {
+    font-size: 0.98rem;
+  }
+}
+
+
+/* === v17：进度条常显、倒计时条开始后浮现、TeX 提示框修正 ===================================== */
+body.before-start #practice-progress-block {
+  max-height: 110px !important;
+  margin: -8px auto 22px !important;
+  opacity: 1 !important;
+  transform: none !important;
+  pointer-events: auto !important;
+  overflow: visible !important;
+}
+
+body.practice-started #practice-progress-block {
+  max-height: 110px !important;
+  opacity: 1 !important;
+  transform: none !important;
+}
+
+#bar {
+  transition: opacity 0.28s ease, transform 0.28s ease, height 0.28s ease, max-height 0.28s ease, margin 0.28s ease;
+  max-height: 18px;
+}
+
+body.before-start #bar {
+  height: 0 !important;
+  max-height: 0 !important;
+  margin-top: 0 !important;
+  opacity: 0 !important;
+  transform: translateY(-8px);
+  pointer-events: none;
+  overflow: hidden;
+}
+
+body.practice-started #bar {
+  height: 18px !important;
+  max-height: 18px !important;
+  opacity: 1 !important;
+  transform: translateY(0);
+}
+
+.chapter-info-body mjx-container {
+  color: #f5f5f7;
+  font-size: 1.04em;
+}
+
+.chapter-formula {
+  color: #f5f5f7;
+}
+
+/* === v18：能力值、艾宾浩斯错题巩固、体力值电池 ===================================== */
+#practice-progress-label {
+  font-weight: 820;
+}
+
+.wrong-row.locked {
+  opacity: 0.72;
+}
+
+.wrong-row.due {
+  border-color: rgba(245, 245, 247, 0.24);
+}
+
+.wrong-dot.green {
+  background: #3ddc84;
+}
+
+.wrong-dot.locked {
+  opacity: 0.28;
+  transform: scale(0.82);
+  filter: grayscale(0.25);
+}
+
+.wrong-dot.done {
+  opacity: 0.18;
+  transform: scale(0.72);
+  filter: grayscale(0.55);
+}
+
+.wrong-dot.active {
+  opacity: 1;
+  transform: scale(1.08);
+  filter: none;
+  box-shadow: 0 0 0 1px rgba(255,255,255,0.36) inset, 0 0 14px rgba(255,255,255,0.18);
+}
+
+.wrong-due-label {
+  min-width: 74px;
+  color: #cbd0d8;
+  font-size: 0.8rem;
+  font-weight: 760;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.review-title-wrap {
+  width: min(900px, 96%);
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 18px;
+  position: relative;
+}
+
+.review-title-main {
+  font-size: clamp(2.1rem, 4.3vw, 4.2rem);
+  font-weight: 850;
+  line-height: 1.18;
+  color: var(--text);
+}
+
+.review-title-tools {
+  position: absolute;
+  right: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.stamina-battery {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 24px;
+}
+
+.battery-shell {
+  position: relative;
+  width: 76px;
+  height: 22px;
+  overflow: hidden;
+  border: 2px solid #f5f5f7;
+  border-radius: 6px;
+  background: #07080a;
+}
+
+.battery-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  background: #f5f5f7;
+  transition: width 0.7s linear;
+}
+
+.battery-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  pointer-events: none;
+}
+
+.battery-cells span {
+  border-right: 2px solid #07080a;
+}
+
+.battery-cells span:last-child {
+  border-right: 0;
+}
+
+.battery-head {
+  width: 5px;
+  height: 12px;
+  border-radius: 0 3px 3px 0;
+  background: #f5f5f7;
+}
+
+.review-help-area {
+  position: relative;
+  flex: 0 0 auto;
+}
+
+.review-help-btn {
+  width: 30px;
+  height: 30px;
+  min-height: 30px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245,245,247,0.38);
+  border-radius: 999px;
+  background: #111318;
+  color: var(--text);
+  font-size: 0.95rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.review-help-tooltip {
+  position: absolute;
+  top: 40px;
+  right: 0;
+  width: min(360px, 78vw);
+  z-index: 3600;
+  padding: 14px 16px;
+  border: 1px solid rgba(245,245,247,0.24);
+  border-radius: 16px;
+  background: rgba(18, 19, 23, 0.97);
+  box-shadow: 0 18px 60px rgba(0,0,0,0.48);
+  color: var(--text);
+  font-size: 0.88rem;
+  line-height: 1.55;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+}
+
+.review-help-area:hover .review-help-tooltip,
+.review-help-area.show .review-help-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.review-help-title {
+  margin-bottom: 8px;
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.review-help-tooltip > div:not(.review-help-title) {
+  display: grid;
+  grid-template-columns: 70px 1fr;
+  gap: 9px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(245,245,247,0.08);
+}
+
+.review-help-tooltip b {
+  color: #f5f5f7;
+  font-weight: 900;
+}
+
+.review-help-tooltip span {
+  color: #d8dce4;
+}
+
+body.mode-review.before-start #question {
+  margin-bottom: 22px;
+}
+
+body.mode-review.practice-started #question .review-title-wrap {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .review-title-wrap {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .review-title-tools {
+    position: static;
+    transform: none;
+  }
+
+  .review-help-tooltip {
+    right: -20px;
+  }
+
+  .wrong-state {
+    flex-wrap: wrap;
+  }
+}
+
+/* === final：统一操作按钮、错题状态栏、笔误按钮与层级修正 === */
+#submitBtn {
+  display: none !important;
+}
+
+#nextBtn {
+  width: 188px;
+  min-width: 188px;
+  padding-left: 28px;
+  padding-right: 28px;
+  white-space: pre;
+}
+
+#slipBtn {
+  min-width: 96px;
+  padding-left: 22px;
+  padding-right: 22px;
+}
+
+#slipBtn[hidden],
+#pauseBtn[hidden] {
+  display: none !important;
+}
+
+body.before-start #nextBtn {
+  width: 220px;
+  min-width: 220px;
+}
+
+body.practice-started #nextBtn {
+  width: 188px;
+  min-width: 188px;
+}
+
+body.mode-review #review-status-bar {
+  order: 0;
+}
+
+#review-status-bar {
+  width: min(900px, 96%);
+  margin: 0 auto 10px;
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  min-height: 36px;
+  position: relative;
+  z-index: 5600;
+}
+
+#review-status-bar[hidden] {
+  display: none !important;
+}
+
+.review-status-left {
+  grid-column: 1;
+  justify-self: start;
+  display: flex;
+  align-items: center;
+}
+
+.review-status-center {
+  grid-column: 2;
+}
+
+.review-status-right {
+  grid-column: 3;
+  justify-self: end;
+  display: flex;
+  align-items: center;
+}
+
+.stamina-battery {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 30px;
+  filter: drop-shadow(0 8px 18px rgba(0,0,0,0.32));
+}
+
+.battery-shell {
+  position: relative;
+  width: 104px;
+  height: 28px;
+  overflow: hidden;
+  border: 2px solid #f5f5f7;
+  border-radius: 10px;
+  background: #050608;
+  box-shadow: inset 0 0 0 1px rgba(255,255,255,0.10), 0 0 0 1px rgba(0,0,0,0.62);
+}
+
+.battery-fill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(180deg, #ffffff, #e9ebf0);
+  transition: width 0.7s linear;
+}
+
+.battery-cells {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  grid-template-columns: repeat(5, 1fr);
+  pointer-events: none;
+}
+
+.battery-cells span {
+  border-right: 3px solid #050608;
+}
+
+.battery-cells span:last-child {
+  border-right: 0;
+}
+
+.battery-head {
+  width: 7px;
+  height: 15px;
+  border-radius: 0 5px 5px 0;
+  background: #f5f5f7;
+  box-shadow: inset -1px 0 0 rgba(0,0,0,0.18);
+}
+
+.review-help-area {
+  position: relative;
+  z-index: 5800;
+  flex: 0 0 auto;
+}
+
+.review-help-btn {
+  width: 34px;
+  height: 34px;
+  min-height: 34px;
+  padding: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid rgba(245,245,247,0.46);
+  border-radius: 999px;
+  background: #111318;
+  color: var(--text);
+  font-size: 1.02rem;
+  font-weight: 900;
+  cursor: pointer;
+}
+
+.review-help-tooltip {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  width: min(390px, 82vw);
+  z-index: 6200;
+  padding: 14px 16px;
+  border: 1px solid rgba(245,245,247,0.28);
+  border-radius: 16px;
+  background: rgba(18, 19, 23, 0.985);
+  box-shadow: 0 22px 72px rgba(0,0,0,0.58);
+  color: var(--text);
+  font-size: 0.9rem;
+  line-height: 1.58;
+  text-align: left;
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-4px);
+  transition: opacity 0.15s ease, transform 0.15s ease, visibility 0.15s ease;
+  pointer-events: none;
+}
+
+.review-help-area:hover .review-help-tooltip,
+.review-help-area.show .review-help-tooltip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+}
+
+.review-help-title {
+  margin-bottom: 8px;
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+.review-help-tooltip > div:not(.review-help-title) {
+  display: grid;
+  grid-template-columns: 74px minmax(0, 1fr);
+  gap: 10px;
+  padding: 8px 0;
+  border-top: 1px solid rgba(245,245,247,0.08);
+}
+
+.review-help-tooltip b {
+  color: #f5f5f7;
+  font-weight: 900;
+}
+
+.review-help-tooltip span {
+  color: #d8dce4;
+}
+
+body.mode-review.practice-started #question .review-title-wrap {
+  display: initial;
+}
+
+/* 自定义统一的悬浮提示样式：
+   为进度信息和错题帮助的提示框与操作提示保持一致的尺寸和排版。
+   使用灰色底板、圆角边框和统一的网格布局。 */
+#progressInfoTooltip,
+.review-help-tooltip {
+  width: min(360px, 82vw);
+  padding: 14px 16px;
+  border: 1px solid rgba(245, 245, 247, 0.26);
+  border-radius: 16px;
+  background: rgba(18, 19, 23, 0.96);
+  box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
+  color: var(--text);
+  font-size: 0.92rem;
+  line-height: 1.55;
+  text-align: left;
+}
+
+/* 标题加粗，字号统一 */
+#progressInfoTooltip .progress-info-title,
+.review-help-title,
+.help-title {
+  font-weight: 900;
+  font-size: 1rem;
+}
+
+/* 网格排版：标题与内容列宽一致 */
+#progressInfoTooltip div:not(.progress-info-title),
+.review-help-tooltip > div:not(.review-help-title),
+.help-grid > div {
+  display: grid;
+  grid-template-columns: 70px minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+}
+
+/* 粗体统一颜色 */
+#progressInfoTooltip b,
+.review-help-tooltip b,
+.help-grid b {
+  font-weight: 900;
+  color: #f5f5f7;
+}
+
+body.mode-review #question .review-title-main {
+  display: block;
+  text-align: center;
+}
+
+@media (max-width: 720px) {
+  #review-status-bar {
+    width: min(560px, 96%);
+  }
+
+  .battery-shell {
+    width: 88px;
+  }
+
+  .review-help-tooltip {
+    right: 0;
+    width: min(350px, 86vw);
+  }
+
+  #nextBtn,
+  body.practice-started #nextBtn {
+    width: 168px;
+    min-width: 168px;
+  }
+}
+
+
+/* === 使用说明独立文档页 ===================================== */
+.usage-page {
+  display: block;
+  min-height: 100%;
+  padding: 4px 0 28px;
+}
+
+.usage-doc {
+  width: min(920px, 96%);
+  margin: 0 auto;
+  padding: 36px 42px 44px;
+  border: 1px solid rgba(245,245,247,0.14);
+  border-radius: 28px;
+  background:
+    radial-gradient(circle at 20% 0%, rgba(245,245,247,0.08), transparent 32%),
+    linear-gradient(180deg, rgba(245,245,247,0.055), rgba(245,245,247,0.018));
+  box-shadow: 0 20px 70px rgba(0,0,0,0.35);
+}
+
+.usage-kicker {
+  color: #aeb4bf;
+  font-size: 0.95rem;
+  font-weight: 780;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  margin-bottom: 12px;
+}
+
+.usage-doc h1 {
+  margin: 0 0 14px;
+  font-size: clamp(2.2rem, 5vw, 4.1rem);
+  line-height: 1.1;
+  letter-spacing: -0.04em;
+}
+
+.usage-lead {
+  max-width: 760px;
+  margin: 0 0 26px;
+  color: #d7dbe3;
+  font-size: 1.16rem;
+  line-height: 1.8;
+}
+
+.usage-toc {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+  gap: 10px;
+  margin: 26px 0 34px;
+}
+
+.usage-toc a {
+  padding: 12px 14px;
+  border: 1px solid rgba(245,245,247,0.14);
+  border-radius: 16px;
+  background: rgba(0,0,0,0.18);
+  color: #f5f5f7;
+  text-decoration: none;
+  font-weight: 760;
+  text-align: center;
+}
+
+.usage-section {
+  margin-top: 34px;
+  padding-top: 26px;
+  border-top: 1px solid rgba(245,245,247,0.12);
+}
+
+.usage-section h2 {
+  margin: 0 0 18px;
+  font-size: 1.55rem;
+  letter-spacing: -0.02em;
+}
+
+.usage-section p {
+  color: #d7dbe3;
+  font-size: 1.04rem;
+  line-height: 1.8;
+}
+
+.usage-card-grid,
+.usage-principles {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 14px;
+}
+
+.usage-card,
+.usage-principles > div {
+  padding: 18px 18px;
+  border: 1px solid rgba(245,245,247,0.13);
+  border-radius: 18px;
+  background: rgba(0,0,0,0.20);
+}
+
+.usage-card h3,
+.usage-principles h3 {
+  margin: 0 0 8px;
+  color: #f5f5f7;
+  font-size: 1.12rem;
+}
+
+.usage-card p,
+.usage-principles p {
+  margin: 0;
+  color: #cdd2dc;
+  font-size: 0.98rem;
+}
+
+.usage-rule {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 10px;
+  margin-bottom: 18px;
+}
+
+.usage-rule span,
+.usage-rule strong {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 46px;
+  border: 1px solid rgba(245,245,247,0.13);
+  background: rgba(0,0,0,0.22);
+}
+
+.usage-rule span {
+  border-radius: 15px 15px 8px 8px;
+  color: #aeb4bf;
+  font-weight: 760;
+}
+
+.usage-rule strong {
+  margin-top: -10px;
+  border-radius: 8px 8px 15px 15px;
+  color: #f5f5f7;
+  font-size: 1.18rem;
+}
+
+.usage-doc blockquote {
+  margin: 18px 0 0;
+  padding: 14px 18px;
+  border-left: 4px solid #f5f5f7;
+  border-radius: 0 16px 16px 0;
+  background: rgba(245,245,247,0.06);
+  color: #eef0f5;
+  line-height: 1.75;
+}
+
+.usage-timeline {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.usage-timeline > div {
+  padding: 16px 14px;
+  border: 1px solid rgba(245,245,247,0.13);
+  border-radius: 18px;
+  background: rgba(0,0,0,0.20);
+  text-align: center;
+}
+
+.usage-timeline b,
+.usage-timeline span {
+  display: block;
+}
+
+.usage-timeline b {
+  margin: 8px 0 4px;
+  color: #f5f5f7;
+}
+
+.usage-timeline span {
+  color: #cdd2dc;
+  font-size: 0.92rem;
+}
+
+.dot {
+  width: 14px;
+  height: 14px;
+  display: inline-block;
+  border-radius: 50%;
+  box-shadow: 0 0 0 4px rgba(245,245,247,0.06);
+}
+
+.dot.red { background: #ff5c5c; }
+.dot.orange { background: #ffb44a; }
+.dot.yellow { background: #e7d95b; }
+.dot.green { background: #5bbf7a; }
+
+
+
+.usage-feedback-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(260px, 360px);
+  gap: 16px;
+  align-items: stretch;
+}
+
+.usage-contact-card,
+.usage-donate-card {
+  padding: 20px;
+  border: 1px solid rgba(245,245,247,0.13);
+  border-radius: 20px;
+  background: rgba(0,0,0,0.20);
+}
+
+.usage-contact-card h3,
+.usage-donate-card h3 {
+  margin: 0 0 12px;
+  color: #f5f5f7;
+  font-size: 1.15rem;
+}
+
+.usage-contact-line {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid rgba(245,245,247,0.12);
+  border-radius: 14px;
+  background: rgba(245,245,247,0.045);
+}
+
+.usage-contact-line b {
+  color: #f5f5f7;
+  font-weight: 860;
+  white-space: nowrap;
+}
+
+.usage-contact-line a,
+.usage-contact-line span {
+  color: #d7dbe3;
+  word-break: break-all;
+  text-decoration: none;
+}
+
+.usage-copy-btn {
+  flex: 0 0 auto;
+  min-height: 34px;
+  padding: 7px 12px;
+  border: 1px solid rgba(245,245,247,0.28);
+  border-radius: 999px;
+  background: #f1f1f4;
+  color: #111318;
+  font-size: 0.9rem;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.usage-muted {
+  margin: 10px 0 0;
+  color: #aeb4bf !important;
+  font-size: 0.92rem !important;
+  line-height: 1.6 !important;
+}
+
+.usage-donate-card {
+  text-align: center;
+}
+
+.usage-donate-qr {
+  display: block;
+  width: min(310px, 100%);
+  height: auto;
+  margin: 14px auto 0;
+  padding: 10px;
+  border-radius: 18px;
+  background: #fff;
+}
+
+@media (max-width: 760px) {
+  .usage-doc {
+    padding: 28px 20px 34px;
+  }
+
+  .usage-toc,
+  .usage-card-grid,
+  .usage-principles,
+  .usage-timeline,
+  .usage-feedback-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .usage-contact-line {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .usage-rule {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+  </style>
+</head>
+<body>
+  <header id="topbar">
+    <div id="top-left">
+      <div id="app-title">大九九</div>
+    </div>
+    <div id="top-actions">
+      <button type="button" onclick="returnToMain()">主界面</button>
+      <button type="button" onclick="enterReviewMode()">错题巩固</button>
+      <button type="button" onclick="enterProgressMode()">进度查询</button>
+      <button type="button" onclick="enterUsageMode()">使用说明</button>
+      <label for="speedSelect">难度:</label>
+      <select id="speedSelect" onchange="updateTimeout()">
+        <option value="10" selected>初学</option>
+        <option value="6">熟练</option>
+        <option value="4">速算</option>
+      </select>
+    </div>
+  </header>
+
+  <div id="layout">
+    <aside id="chapter-box"></aside>
+
+    <main id="main-panel">
+      <section id="practice-view" class="view-block">
+        <div id="practice-progress-block">
+          <div id="practice-progress-bar"><div id="practice-progress-inner"></div></div>
+
+          <div class="practice-progress-top">
+            <span id="practice-progress-label">能力值：0%</span>
+            <span id="practice-progress-delta"></span>
+          </div>
+        </div>
+        <div id="question">目标: 全部达到熟练</div>
+        <div id="answer-area">
+          <input id="answer" placeholder="输入答案" disabled autocomplete="off" inputmode="numeric">
+          <button id="numberPadBtn" type="button" onclick="toggleNumberPad()">数字</button>
+        </div>
+        <div id="number-pad" class="number-pad hidden">
+          <div class="number-grid">
+            <button type="button" onclick="appendDigit('1')">1</button>
+            <button type="button" onclick="appendDigit('2')">2</button>
+            <button type="button" onclick="appendDigit('3')">3</button>
+            <button type="button" onclick="appendDigit('4')">4</button>
+            <button type="button" onclick="appendDigit('5')">5</button>
+            <button type="button" onclick="appendDigit('6')">6</button>
+            <button type="button" onclick="appendDigit('7')">7</button>
+            <button type="button" onclick="appendDigit('8')">8</button>
+            <button type="button" onclick="appendDigit('9')">9</button>
+            <button type="button" onclick="deleteDigit()">删除</button>
+            <button type="button" onclick="appendDigit('0')">0</button>
+            <button type="button" onclick="numberPadSubmit()">提交</button>
+          </div>
+        </div>
+        <div id="bar"><div id="bar-inner"></div></div>
+        <div id="result"></div>
+        <div id="controls">
+          <button id="submitBtn" type="button" onclick="submitAnswer()" disabled hidden>提交</button>
+          <button id="pauseBtn" type="button" onclick="requestPauseBreak()" hidden>暂停</button>
+          <button id="nextBtn" type="button" onclick="mainAction()">开    始</button>
+          <button id="slipBtn" type="button" onclick="requestSlipProtection()" hidden>笔误</button>
+        </div>
+        <div id="review-box"></div>
+      </section>
+
+      <section id="progress-view" class="view-block" style="display:none;">
+        <div class="progress-head">
+          <div class="view-title">进度查询</div>
+          <div class="progress-filter">
+            <label for="progressFilterSelect">显示:</label>
+            <select id="progressFilterSelect" onchange="changeProgressFilter()"></select>
+          </div>
+        </div>
+        <div id="progressSummary"></div>
+        <div class="legend">
+          <span><i class="legend-cell cell-not-done"></i>未做</span>
+          <span><i class="legend-cell cell-level1"></i>初学</span>
+          <span><i class="legend-cell cell-level2"></i>熟练</span>
+          <span><i class="legend-cell cell-level3"></i>速算</span>
+        </div>
+        <div id="progressContainer"></div>
+      </section>
+
+      <section id="usage-view" class="view-block usage-page" style="display:none;">
+        <article class="usage-doc">
+          <div class="usage-kicker">大九九 · 使用说明</div>
+          <h1>让熟练来自间隔练习，而不是死记硬背</h1>
+          <p class="usage-lead">这个软件把大九九拆成可解锁的章节、可追踪的进度、可循环巩固的错题。目标不是一次背完，而是在每次练习中稳定提高反应速度和正确率。</p>
+
+          <div class="usage-toc">
+            <a href="#usage-op">1. 操作方法</a>
+            <a href="#usage-progress">2. 进度规则</a>
+            <a href="#usage-review">3. 错题巩固</a>
+            <a href="#usage-idea">4. 学习理念</a>
+            <a href="#usage-feedback">5. 反馈与赞赏</a>
+          </div>
+
+          <section id="usage-op" class="usage-section">
+            <h2>1. 操作方法</h2>
+            <div class="usage-card-grid">
+              <div class="usage-card"><h3>回车</h3><p>提交答案。答完之后，回车或点击按钮进入下一题。</p></div>
+              <div class="usage-card"><h3>章节</h3><p>左侧点击切换已解锁章节。未解锁章节需要先完成前一章。</p></div>
+              <div class="usage-card"><h3>数字</h3><p>打开或收回数字九宫格，适合触屏和低龄学习者。</p></div>
+              <div class="usage-card"><h3>难度</h3><p>初学、熟练、速算对应不同限时。速度越快，达成等级越高。</p></div>
+            </div>
+          </section>
+
+          <section id="usage-progress" class="usage-section">
+            <h2>2. 进度规则</h2>
+            <div class="usage-rule">
+              <span>未做</span><strong>0%</strong>
+              <span>初学</span><strong>20%</strong>
+              <span>熟练</span><strong>80%</strong>
+              <span>速算</span><strong>100%</strong>
+            </div>
+            <p>每道题只记录历史最高达成难度。章节进度等于该章节所有题目进度的平均值。</p>
+            <blockquote>答题过程中，本轮新增题目会进入分母，答对进入分子，所以能力值可能实时上升或下降。</blockquote>
+          </section>
+
+          <section id="usage-review" class="usage-section">
+            <h2>3. 错题巩固设计</h2>
+            <div class="usage-timeline">
+              <div><i class="dot red"></i><b>红灯</b><span>现在复习</span></div>
+              <div><i class="dot orange"></i><b>橙灯</b><span>5分钟后</span></div>
+              <div><i class="dot yellow"></i><b>黄灯</b><span>1小时后</span></div>
+              <div><i class="dot green"></i><b>绿灯</b><span>1天后</span></div>
+            </div>
+            <p>错题不会立刻反复轰炸，而是按间隔节点推送。未到复习时间的题会变暗，暂不推送。</p>
+            <p>错题进度按红、橙、黄、绿四个节点的完成比例计算。某道错题完成全部节点后，才算真正清空。</p>
+            <p>如果是笔误导致答错，可以点击“笔误”按钮消耗一格体力，恢复本题原来的巩固节点。体力值会随时间自动回充。</p>
+          </section>
+
+          <section id="usage-idea" class="usage-section">
+            <h2>4. 学习理念</h2>
+            <div class="usage-principles">
+              <div><h3>间隔练习</h3><p>把一次性重复改成分时复现，降低机械死记硬背的负担。</p></div>
+              <div><h3>可见进度</h3><p>用进度条和颜色状态显示学习轨迹，提升学习掌控感。</p></div>
+              <div><h3>错题优先</h3><p>把错误视为需要管理的记忆节点，而不是简单的失败记录。</p></div>
+              <div><h3>速度递进</h3><p>先保证正确，再逐步压缩反应时间，从会做到熟练，再到速算。</p></div>
+            </div>
+          </section>
+
+          <section id="usage-feedback" class="usage-section">
+            <h2>5. 用户反馈与赞赏</h2>
+            <div class="usage-feedback-grid">
+              <div class="usage-contact-card">
+                <h3>用户反馈</h3>
+                <p>使用过程中如果遇到错误、卡顿、题目问题或有改进建议，可以通过下面方式联系作者。</p>
+                <div class="usage-contact-line">
+                  <b>邮箱</b>
+                  <a href="mailto:1317407773@qq.com">1317407773@qq.com</a>
+                  <button class="usage-copy-btn" type="button" onclick="copyText('1317407773@qq.com', this)">复制</button>
+                </div>
+                <div class="usage-contact-line">
+                  <b>微信</b>
+                  <span>L1807636563</span>
+                  <button class="usage-copy-btn" type="button" onclick="copyText('L1807636563', this)">复制</button>
+                </div>
+              </div>
+              <div class="usage-donate-card">
+                <h3>赞赏作者</h3>
+                <p>如果这个小工具帮到了你，可以用微信扫码给作者送点零食。</p>
+                <img class="usage-donate-qr" src="data:image/jpeg;base64,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FABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFACYFHSlooAKa3UY68n/AD+dOpCAetAH5uf8FLf2Gvjb+0N8UNA+JXwlsbDVYYtLTTLu1nvlgeBkkdg4D4UqQ3OCTlenTP1Z+xR+z3c/s0/ADQ/hvrFxBca2HkvtWkgbdH9qlOSqnAyFAVc+xr3YIo5Ax/8ArzSgBRhRgUAAGOKWiigD80f+C3HiJrf4dfDfwstztW81m71Bo9mc+TAEDZ7Y88jHufQY5P8A4IiaG4vfin4jaCTbs02wSTPy8NK7L/6Aa+5/2sv2TfAP7Wvguw8KeNdRv9Km0m7N1YajYlfNhdl2MpDZVlYYyCOwNS/sp/sqeBv2TvAtz4N8Hajf6pLqN217fahfbRJPIQAvyrwqqoAA+pNAHtq9PxpaReBgmloAxfGPijRvBHhfVvGHiK4MGmaLZTX11KBysUalmx6nA4GRzXyv+zn/AMFL/g9+0f8AFFfhXofhnxDol/diV9Mnv1iMV55XzFfkYlCVBOD7V9T+M/CmjeOfC2r+DvEMBm03W7KWwu0U7WaJ1Kkbu3BNfKn7OP8AwTO+D37OXxTX4raR4q13W9QsvN/syC+EaR2YkVlP3AC52swyeOnGRmgD7DjPy9e/P170+moCF5z+NOoAp6pZW2p2Fxpl5Hvgu4nt5V6bkdSrDPuCa/Hzw/8A8Epv2gdA/aPsL2y/sn/hCdP8QxajBrS36h2s45xIo8oYdZNg2kY65I7V+xxUHkikCqO360ANiJKjJJ46kYqSkAA6DGaWgBCM0Y7UtFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAFFFFABRRRQAUUUUAJgZ3d+lAAHApaKACiiigBMZo2qDkDBPJx3paKAEAA6CloooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKACiiigAooooAKKKKAP/9k=" alt="赞赏码">
+              </div>
+            </div>
+          </section>
+        </article>
+      </section>
+    </main>
+  </div>
+
+  <div id="start-confirm" class="start-confirm hidden">
+    <div class="start-confirm-card">
+      <div class="start-confirm-title">准备好了吗?</div>
+      <div class="start-confirm-text">每7题会出现一次暂停机会</div>
+      <div class="start-confirm-actions">
+        <button type="button" onclick="hideStartConfirm()">取消</button>
+        <button type="button" onclick="confirmStartPractice()">开始</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="pause-confirm" class="pause-confirm hidden">
+    <div class="pause-confirm-card">
+      <div class="pause-confirm-title">结束本轮练习?</div>
+      <div class="pause-confirm-text">已保存当前进度。确认后回到开始前界面。</div>
+      <div class="pause-confirm-actions">
+        <button type="button" onclick="cancelPauseBreak()">取消</button>
+        <button type="button" onclick="confirmPauseBreak()">确认结束</button>
+      </div>
+    </div>
+  </div>
+
+
+  <div id="chapter-info-modal" class="chapter-info-modal hidden" onclick="if (event.target === this) closeChapterInfo()">
+    <div class="chapter-info-card">
+      <button class="chapter-info-close" type="button" onclick="closeChapterInfo()" aria-label="关闭章节说明">×</button>
+      <div id="chapter-info-content"></div>
+    </div>
+  </div>
+
+  <script>
+    window.MathJax = {
+      tex: { inlineMath: [['\\(', '\\)'], ['$', '$']] },
+      svg: { fontCache: 'global' }
+    };
+  </script>
+  <script defer src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-svg.js"></script>
+
+  <!-- 内嵌脚本文件，合并自原 script(44).js，并进行了修正以实现错题进度计算与章节记忆功能 -->
+  <script>
+// 大九九练习：章节锁、随机队列、错题三次消除、通关动画、数字九宫格
+
+const rows = [2,3,4,5,6,7,8,9,11,12,13,14,15,16,17,18,19];
+const cols = [11,12,13,14,15,16,17,18,19];
+
+let mode = "normal";
+function setMode(nextMode) {
+  mode = nextMode;
+  document.body.classList.toggle("mode-review", mode === "review");
+  document.body.classList.toggle("mode-progress", mode === "progress");
+  document.body.classList.toggle("mode-usage", mode === "usage");
+  document.body.classList.toggle("mode-normal", mode === "normal");
+  updatePracticeStateClass();
+  updateReviewStatusBarVisibility();
+}
+
+function updatePracticeStateClass() {
+  const isPracticeMode = mode === "normal" || mode === "review";
+  document.body.classList.toggle("before-start", isPracticeMode && !activePracticeStarted);
+  document.body.classList.toggle("practice-started", isPracticeMode && activePracticeStarted);
+}
+
+let reviewList = loadArray("wrongProblems");
+let wrongMeta = loadObject("wrongMeta");
+let progressMap = loadObject("progressMap");
+let passLevels = [];
+let timeout = 10;
+let timer = null;
+let answered = true;
+let currentQuestion = "";
+let currentAns = 0;
+let currentProblem = null;
+let currentIsWrongProblem = false;
+let currentChapterIndex = parseInt(localStorage.getItem("currentChapterIndex") || "0", 10);
+let currentOrderedPosition = -1;
+let chapterCollapsed = localStorage.getItem("chapterCollapsed") === "1";
+let progressFilter = localStorage.getItem("progressFilter") || "all";
+let practiceStats = { correctExtra: 0, totalExtra: 0, streak: 0 };
+let reviewSessionKeys = [];
+let activePracticeStarted = false;
+let pendingStartCallback = null;
+const PAUSE_INTERVAL = 7;
+let pauseAnsweredCount = 0;
+let pauseAvailable = false;
+let pauseWasDuringQuestion = false;
+let timerElapsed = 0;
+
+// 记录用户在练习模式中选择的章节。当进入错题巩固或进度查询模式时，我们先保存当前章节，
+// 返回练习模式时再恢复之前的章节。这样可以避免回到主界面时跳转到未解锁或者非用户选择的章节。
+let previousChapterIndex = null;
+
+const WRONG_REVIEW_STAGES = [
+  { color: "red", label: "现在", delayMs: 0 },
+  { color: "orange", label: "5min后", delayMs: 5 * 60 * 1000 },
+  { color: "yellow", label: "1h后", delayMs: 60 * 60 * 1000 },
+  { color: "green", label: "1天后", delayMs: 24 * 60 * 60 * 1000 }
+];
+const STAMINA_MAX = 5;
+let reviewStamina = loadObject("reviewStamina");
+let staminaTimer = null;
+let pendingSlipProtection = null;
+
+let session = {
+  chapterIndex: 0,
+  level: 1,
+  newQueue: [],
+  wrongQueue: [],
+  practiceQueue: [],
+  streak: 0
+};
+
+
+function copyText(text, btn) {
+  const done = () => {
+    if (!btn) return;
+    const oldText = btn.textContent;
+    btn.textContent = "已复制";
+    setTimeout(() => { btn.textContent = oldText || "复制"; }, 1200);
+  };
+
+  if (navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(text).then(done).catch(() => fallbackCopyText(text, done));
+  } else {
+    fallbackCopyText(text, done);
+  }
+}
+
+function fallbackCopyText(text, done) {
+  const input = document.createElement("textarea");
+  input.value = text;
+  input.setAttribute("readonly", "readonly");
+  input.style.position = "fixed";
+  input.style.left = "-9999px";
+  document.body.appendChild(input);
+  input.select();
+  try { document.execCommand("copy"); } catch (e) {}
+  document.body.removeChild(input);
+  if (typeof done === "function") done();
+}
+
+function loadArray(key) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || "[]");
+    return Array.isArray(v) ? v : [];
+  } catch (e) {
+    return [];
+  }
+}
+
+function loadObject(key) {
+  try {
+    const v = JSON.parse(localStorage.getItem(key) || "{}");
+    return v && typeof v === "object" && !Array.isArray(v) ? v : {};
+  } catch (e) {
+    return {};
+  }
+}
+
+function normKey(a, b) {
+  return a <= b ? `${a}x${b}` : `${b}x${a}`;
+}
+
+function keyOf(problem) {
+  return normKey(problem[0], problem[1]);
+}
+
+function range(start, end) {
+  const out = [];
+  for (let n = start; n <= end; n++) out.push(n);
+  return out;
+}
+
+function shuffleCopy(arr) {
+  const out = arr.slice();
+  for (let i = out.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [out[i], out[j]] = [out[j], out[i]];
+  }
+  return out;
+}
+
+function dedupeProblems(problems) {
+  const seen = new Set();
+  const out = [];
+  for (const p of problems) {
+    const key = keyOf(p);
+    if (!seen.has(key)) {
+      seen.add(key);
+      out.push(p);
+    }
+  }
+  return out;
+}
+
+function buildSmallCompositeProblems() {
+  const out = [];
+  for (const a of rows.filter(n => n >= 2 && n <= 9)) {
+    for (const b of cols) {
+      const prod = a * b;
+      if (prod < 100) out.push([a, b]);
+    }
+  }
+  return out;
+}
+
+function buildThirtyPlusProblems(excludedProblems) {
+  const excluded = new Set(excludedProblems.map(keyOf));
+  const out = [];
+  for (let a = 11; a <= 19; a++) {
+    for (let b = a; b <= 19; b++) {
+      const s = a + b;
+      const key = normKey(a, b);
+      if (s >= 29 && s <= 34 && !excluded.has(key)) out.push([a, b]);
+    }
+  }
+  return out;
+}
+
+const squareProblems = range(11, 19).map(n => [n, n]);
+const smallCompositeProblems = buildSmallCompositeProblems();
+const noCarryProblems = [
+  [11,12], [11,13], [11,14], [11,15], [11,16], [11,17], [11,18],
+  [12,13], [12,14]
+];
+const oneCarryProblems = [[12,15], [12,16], [13,14], [13,15]];
+const sum30Problems = [[11,19], [12,18], [13,17], [14,16]];
+const weakPatternProblems = [[16,19], [17,18], [17,19], [18,19]];
+const thirtyPlusProblems = buildThirtyPlusProblems([
+  ...squareProblems,
+  ...noCarryProblems,
+  ...oneCarryProblems,
+  ...sum30Problems,
+  ...weakPatternProblems
+]);
+
+const chapters = [
+  { name: "1. 平方数", hint: "11×11 至 19×19", problems: squareProblems },
+  { name: "2. 100以内合数", hint: "2× 至 9×，11 至 19，积小于100", problems: smallCompositeProblems },
+  { name: "3. 不进位数", hint: "百位为1，十位=a+b，个位=a×b", problems: noCarryProblems },
+  { name: "4. 进一位数", hint: "百位为1，十位=a+b+1，个位取a×b个位", problems: oneCarryProblems },
+  { name: "5. 和30数", hint: "两个因数之和为30", problems: sum30Problems },
+  { name: "6. 30+m数", hint: "因数和为29至34，排除前面章节与弱规律数", problems: thirtyPlusProblems },
+  { name: "7. 弱规律数", hint: "16×19、17×18、17×19、18×19", problems: weakPatternProblems }
+].map(ch => ({ ...ch, problems: dedupeProblems(ch.problems) }));
+
+const orderedQuestions = chapters.flatMap((chapter, chapterIndex) =>
+  chapter.problems.map(problem => ({ chapterIndex, problem }))
+);
+
+initPersistentState();
+
+function initPersistentState() {
+  passLevels = loadArray("chapterPassLevels").map(v => Number(v) || 0);
+  while (passLevels.length < chapters.length) passLevels.push(0);
+  migrateStorageToNormalizedKeys();
+  normalizeStaminaState();
+
+  if (!Number.isFinite(currentChapterIndex) || currentChapterIndex < 0 || currentChapterIndex >= chapters.length) {
+    currentChapterIndex = firstUnlockedChapter();
+  }
+  if (!isUnlocked(currentChapterIndex)) currentChapterIndex = firstUnlockedChapter();
+  localStorage.setItem("currentChapterIndex", String(currentChapterIndex));
+}
+
+function firstUnlockedChapter() {
+  for (let i = 0; i < chapters.length; i++) {
+    if (isUnlocked(i)) return i;
+  }
+  return 0;
+}
+
+function currentLevel() {
+  if (timeout <= 4) return 3;
+  if (timeout <= 6) return 2;
+  return 1;
+}
+
+function levelName(level) {
+  return ["", "初学", "熟练", "速算"][level] || "训练";
+}
+
+function nowMs() {
+  return Date.now();
+}
+
+function clampNumber(v, min, max, fallback) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return fallback;
+  return Math.max(min, Math.min(max, n));
+}
+
+function stageDelayMs(stage) {
+  const item = WRONG_REVIEW_STAGES[Math.max(0, Math.min(WRONG_REVIEW_STAGES.length - 1, stage))];
+  return item ? item.delayMs : 0;
+}
+
+function nextStageDelayMs(stage) {
+  const next = Math.min(WRONG_REVIEW_STAGES.length - 1, Math.max(0, stage) + 1);
+  return stageDelayMs(next) || stageDelayMs(WRONG_REVIEW_STAGES.length - 1);
+}
+
+function normalizeWrongMeta(raw, key) {
+  const old = raw && typeof raw === "object" ? raw : {};
+  let step;
+  if (Number.isFinite(Number(old.step))) {
+    step = clampNumber(old.step, 0, WRONG_REVIEW_STAGES.length - 1, 0);
+  } else {
+    const remaining = clampNumber(old.remaining, 1, 3, 3);
+    step = clampNumber(3 - remaining, 0, WRONG_REVIEW_STAGES.length - 1, 0);
+  }
+
+  const level = clampNumber(old.level, 1, 3, currentLevel());
+  const wrongAt = Number.isFinite(Number(old.wrongAt)) ? Number(old.wrongAt) : nowMs();
+  let dueAt = Number(old.dueAt);
+  if (!Number.isFinite(dueAt)) dueAt = wrongAt + stageDelayMs(step);
+
+  return { level, step, dueAt, wrongAt };
+}
+
+function wrongStage(key) {
+  const meta = normalizeWrongMeta(wrongMeta[key], key);
+  wrongMeta[key] = meta;
+  return meta;
+}
+
+function isWrongDue(key) {
+  const meta = wrongStage(key);
+  return nowMs() >= Number(meta.dueAt || 0);
+}
+
+function availableWrongKeys() {
+  return reviewList.filter(key => isWrongDue(key));
+}
+
+function nearestWrongDueAt() {
+  let nearest = Infinity;
+  for (const key of reviewList) {
+    const meta = wrongStage(key);
+    if (nowMs() < meta.dueAt) nearest = Math.min(nearest, meta.dueAt);
+  }
+  return Number.isFinite(nearest) ? nearest : null;
+}
+
+function compactFutureTime(ms) {
+  const diff = Math.max(0, Number(ms) - nowMs());
+  if (diff <= 0) return "现在";
+  const sec = Math.ceil(diff / 1000);
+  if (sec < 60) return `${sec}秒`;
+  const min = Math.ceil(sec / 60);
+  if (min < 60) return `${min}分钟`;
+  const hour = Math.ceil(min / 60);
+  if (hour < 24) return `${hour}小时`;
+  const day = Math.ceil(hour / 24);
+  return `${day}天`;
+}
+
+function showReviewWaitHint() {
+  const nearest = nearestWrongDueAt();
+  const text = nearest ? `请在${compactFutureTime(nearest)}后前来巩固` : "当前没有可巩固错题";
+  showToast(text);
+  const result = document.getElementById("result");
+  if (result) result.textContent = text;
+}
+
+function onlyWrongLeftInCurrentChapter() {
+  if (mode !== "normal") return false;
+  const chapter = chapters[currentChapterIndex];
+  if (!chapter) return false;
+  const wrongKeys = new Set(chapterWrongKeys(currentChapterIndex));
+  if (wrongKeys.size === 0) return false;
+  const level = currentLevel();
+  const newProblems = chapter.problems.filter(p => problemLevel(p) < level && !wrongKeys.has(keyOf(p)));
+  return newProblems.length === 0;
+}
+
+function showOnlyWrongLeftHint() {
+  const text = "新题已做完, 请到错题巩固";
+  showToast(text);
+  const result = document.getElementById("result");
+  if (result) result.textContent = text;
+}
+
+function normalizeStaminaState() {
+  const raw = reviewStamina && typeof reviewStamina === "object" ? reviewStamina : {};
+  const spent = Array.isArray(raw.spent) ? raw.spent : [];
+  const t = nowMs();
+  reviewStamina = {
+    spent: spent
+      .map(item => ({
+        usedAt: Number(item && item.usedAt),
+        recoverAt: Number(item && item.recoverAt)
+      }))
+      .filter(item => Number.isFinite(item.usedAt) && Number.isFinite(item.recoverAt) && item.recoverAt > t)
+      .slice(-STAMINA_MAX)
+  };
+  saveStaminaState();
+}
+
+function saveStaminaState() {
+  localStorage.setItem("reviewStamina", JSON.stringify(reviewStamina));
+}
+
+function staminaPendingItems() {
+  normalizeStaminaState();
+  return reviewStamina.spent;
+}
+
+function availableStaminaUnits() {
+  return Math.max(0, STAMINA_MAX - staminaPendingItems().length);
+}
+
+function staminaVisualValue() {
+  const t = nowMs();
+  let value = STAMINA_MAX;
+  for (const item of staminaPendingItems()) {
+    const total = Math.max(1, item.recoverAt - item.usedAt);
+    const recovered = Math.max(0, Math.min(1, (t - item.usedAt) / total));
+    value -= (1 - recovered);
+  }
+  return Math.max(0, Math.min(STAMINA_MAX, value));
+}
+
+function consumeStaminaForStage(stage) {
+  if (availableStaminaUnits() < 1) return false;
+  const t = nowMs();
+  const duration = Math.max(60 * 1000, nextStageDelayMs(stage));
+  reviewStamina.spent.push({ usedAt: t, recoverAt: t + duration });
+  saveStaminaState();
+  updateStaminaBattery();
+  return true;
+}
+
+function batteryHtml() {
+  return `
+    <div id="stamina-battery" class="stamina-battery" aria-label="体力值">
+      <div class="battery-shell">
+        <div class="battery-fill"></div>
+        <div class="battery-cells"><span></span><span></span><span></span><span></span></div>
+      </div>
+      <div class="battery-head"></div>
+    </div>
+  `;
+}
+
+function updateStaminaBattery() {
+  const fill = document.querySelector("#stamina-battery .battery-fill");
+  if (!fill) return;
+  const pct = (staminaVisualValue() / STAMINA_MAX) * 100;
+  fill.style.width = `${pct.toFixed(2)}%`;
+}
+
+function startStaminaTimer() {
+  stopStaminaTimer();
+  updateStaminaBattery();
+  staminaTimer = setInterval(updateStaminaBattery, 1000);
+}
+
+function stopStaminaTimer() {
+  if (staminaTimer) clearInterval(staminaTimer);
+  staminaTimer = null;
+}
+
+function resetWrongToRed(key) {
+  wrongMeta[key] = { level: currentLevel(), step: 0, dueAt: nowMs(), wrongAt: nowMs() };
+  if (!reviewList.includes(key)) reviewList.push(key);
+  saveWrongState();
+}
+
+function cloneWrongMeta(meta) {
+  return {
+    level: clampNumber(meta && meta.level, 1, 3, currentLevel()),
+    step: clampNumber(meta && meta.step, 0, WRONG_REVIEW_STAGES.length - 1, 0),
+    dueAt: Number.isFinite(Number(meta && meta.dueAt)) ? Number(meta.dueAt) : nowMs(),
+    wrongAt: Number.isFinite(Number(meta && meta.wrongAt)) ? Number(meta.wrongAt) : nowMs()
+  };
+}
+
+function hideSlipButton(clearPending = true) {
+  if (clearPending) pendingSlipProtection = null;
+  const btn = document.getElementById("slipBtn");
+  if (!btn) return;
+  btn.hidden = true;
+  btn.disabled = true;
+}
+
+function showSlipButton(key, metaBefore) {
+  pendingSlipProtection = { key, metaBefore: cloneWrongMeta(metaBefore) };
+  const btn = document.getElementById("slipBtn");
+  if (!btn) return;
+  btn.hidden = false;
+  btn.disabled = false;
+}
+
+function requestSlipProtection() {
+  if (!pendingSlipProtection || mode !== "review") return;
+  const { key, metaBefore } = pendingSlipProtection;
+  if (availableStaminaUnits() < 1) {
+    showToast("体力不足，无法保护本题进度");
+    return;
+  }
+  const ok = window.confirm("是否消耗1格体力，恢复本题原来的艾宾浩斯进度？");
+  if (!ok) return;
+
+  if (!consumeStaminaForStage(metaBefore.step)) {
+    showToast("体力不足，无法保护本题进度");
+    return;
+  }
+
+  wrongMeta[key] = cloneWrongMeta(metaBefore);
+  if (!reviewList.includes(key)) reviewList.push(key);
+  saveWrongState();
+  hideSlipButton(true);
+  updateStaminaBattery();
+  updateReviewBox();
+  showToast("已消耗1格体力，恢复本题巩固进度");
+}
+
+function reviewHelpHtml() {
+  return "";
+}
+
+function ensureReviewStatusBar() {
+  const practiceView = document.getElementById("practice-view");
+  const question = document.getElementById("question");
+  if (!practiceView || !question) return null;
+
+  let bar = document.getElementById("review-status-bar");
+  if (!bar) {
+    bar = document.createElement("div");
+    bar.id = "review-status-bar";
+    question.insertAdjacentElement("beforebegin", bar);
+  }
+
+  bar.innerHTML = `
+    <div class="review-status-left">${batteryHtml()}</div>
+    <div class="review-status-center"></div>
+    <div class="review-status-right">${reviewHelpHtml()}</div>
+  `;
+  bar.hidden = mode !== "review";
+  if (mode === "review") {
+    updateStaminaBattery();
+    startStaminaTimer();
+    setupReviewHelpTip();
+  }
+  return bar;
+}
+
+function updateReviewStatusBarVisibility() {
+  const bar = document.getElementById("review-status-bar");
+  if (!bar) return;
+  bar.hidden = mode !== "review";
+  if (mode === "review") {
+    updateStaminaBattery();
+    startStaminaTimer();
+  } else {
+    stopStaminaTimer();
+  }
+}
+
+function renderReviewTitle() {
+  ensureReviewStatusBar();
+  const question = document.getElementById("question");
+  if (!question) return;
+  question.classList.remove("question-wrong");
+  question.innerHTML = `<div class="review-title-main">错题巩固</div>`;
+  updateStaminaBattery();
+}
+
+function stripChapterNumber(name) {
+  return String(name || "").replace(/^\s*\d+\.\s*/, "");
+}
+
+function levelWeight(level) {
+  if (level >= 3) return 1.0;   // 初学20% + 熟练60% + 速算20%
+  if (level === 2) return 0.8;  // 初学20% + 熟练60%
+  if (level === 1) return 0.2;  // 初学20%
+  return 0;
+}
+
+function problemProgressScore(problem) {
+  return levelWeight(problemLevel(problem));
+}
+
+function allChapterProblems() {
+  return chapters.flatMap(ch => ch.problems);
+}
+
+function progressRatioForProblems(problems) {
+  if (!problems || problems.length === 0) return 0;
+  const done = problems.reduce((sum, p) => sum + problemProgressScore(p), 0);
+  return done / problems.length;
+}
+
+function progressPercentText(ratio) {
+  return `${(Math.max(0, Math.min(1, ratio)) * 100).toFixed(2)}%`;
+}
+
+function currentChapterBaseProgress() {
+  const chapter = chapters[currentChapterIndex];
+  if (!chapter || chapter.problems.length === 0) {
+    return { score: 0, total: 1 };
+  }
+
+  const score = chapter.problems.reduce((sum, p) => sum + problemProgressScore(p), 0);
+  const total = chapter.problems.length;
+  return { score, total };
+}
+
+function currentPracticeRatio() {
+  const base = currentChapterBaseProgress();
+  const score = base.score + practiceStats.correctExtra;
+  const total = base.total + practiceStats.totalExtra;
+  return total > 0 ? score / total : 0;
+}
+
+function resetPracticeStats() {
+  practiceStats = { correctExtra: 0, totalExtra: 0, streak: 0 };
+  updatePracticeProgress();
+}
+
+function updatePracticeProgress(deltaText = "") {
+  const inner = document.getElementById("practice-progress-inner");
+  const label = document.getElementById("practice-progress-label");
+  const delta = document.getElementById("practice-progress-delta");
+  if (!inner || !label || !delta) return;
+
+  const ratio = currentPracticeRatio();
+  inner.style.width = `${(Math.max(0, Math.min(1, ratio)) * 100).toFixed(2)}%`;
+  label.textContent = `能力值：${progressPercentText(ratio)}`;
+
+  if (deltaText) {
+    delta.textContent = deltaText;
+    delta.classList.remove("show", "positive", "negative");
+    void delta.offsetWidth;
+    delta.classList.add("show", deltaText.startsWith("+") ? "positive" : "negative");
+  }
+}
+
+function formatDeltaPercent(delta) {
+  const sign = delta >= 0 ? "+" : "";
+  return `${sign}${(delta * 100).toFixed(2)}%`;
+}
+
+function recordPracticeResult(isCorrect) {
+  const before = currentPracticeRatio();
+  practiceStats.totalExtra += 1;
+
+  if (isCorrect) {
+    practiceStats.correctExtra += 1;
+    practiceStats.streak += 1;
+  } else {
+    practiceStats.streak = 0;
+  }
+
+  const after = currentPracticeRatio();
+  const delta = after - before;
+
+  if (isCorrect) {
+    const streakText = practiceStats.streak >= 2 ? `  连击×${practiceStats.streak}!` : "  连击×1!";
+    updatePracticeProgress(`${formatDeltaPercent(delta)}${streakText}`);
+  } else {
+    updatePracticeProgress(formatDeltaPercent(delta));
+  }
+
+  return delta;
+}
+
+function renderQuestion(a, b, isWrong) {
+  const question = document.getElementById("question");
+  if (!question) return;
+  question.classList.toggle("question-wrong", Boolean(isWrong));
+  question.innerHTML = `
+    <span class="question-main">${a} × ${b} = ?</span>
+    ${isWrong ? '<span class="question-badge">错题</span>' : ''}
+  `;
+}
+
+function currentChapterTitle() {
+
+  const chapter = chapters[currentChapterIndex];
+  return chapter ? stripChapterNumber(chapter.name) : "章节训练";
+}
+
+function escapeHtml(text) {
+  return String(text)
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/"/g, "&quot;")
+    .replace(/'/g, "&#39;");
+}
+
+function renderChapterStartTitle() {
+  const question = document.getElementById("question");
+  if (!question) return;
+  question.classList.remove("question-wrong");
+  question.innerHTML = `<button class="chapter-main-title" type="button" onclick="showChapterInfo(currentChapterIndex)" title="查看章节说明">${escapeHtml(currentChapterTitle())}</button>`;
+}
+
+const chapterInfoList = [
+  {
+    title: "平方数",
+    body: String.raw`
+      <p>形如某个数的平方。本章只需要直接记忆 11 到 19 的平方数。</p>
+      <p><b>范围</b>：11² 到 19²。</p>
+    `
+  },
+  {
+    title: "100以内合数",
+    body: String.raw`
+      <p>积小于一百的合数。这里的合数指不是质数，也不是素数的整数。</p>
+      <div class="chapter-formula">\[a\times b<100,\quad a\in\{2,3,\ldots,9\},\quad b\in\{11,12,\ldots,19\}\]</div>
+      <p>本章训练小乘数乘以 11 到 19 的心算反应。</p>
+    `
+  },
+  {
+    title: "不进位数",
+    body: String.raw`
+      <p>形如 \(1a\times 1b\)，其中 \(a,b\) 是个位数，且 \(a\times b<10\)。</p>
+      <div class="chapter-formula">\[(10+a)(10+b)=100+10(a+b)+ab\]</div>
+      <p><b>百位</b>为 1，<b>十位</b>为 \(a+b\)，<b>个位</b>为 \(a\times b\)。</p>
+      <p><b>范围</b>：11 乘 12 到 18；12 乘 13 到 14。本章排除平方数。</p>
+    `
+  },
+  {
+    title: "进一位数",
+    body: String.raw`
+      <p>形如 \(1a\times 1b\)，其中 \(a\times b\) 需要向十位进一位。</p>
+      <div class="chapter-formula">\[(10+a)(10+b)=100+10(a+b+1)+(ab\bmod 10)\]</div>
+      <p><b>百位</b>为 1，<b>十位</b>为 \(a+b+1\)，<b>个位</b>为 \(a\times b\) 的个位。</p>
+      <p><b>范围</b>：12 乘 15 到 16；13 乘 14 到 15。本章排除平方数。</p>
+    `
+  },
+  {
+    title: "和30数",
+    body: String.raw`
+      <p>两个乘数之和为 30。写成 \(10+a\) 与 \(10+b\) 时，有 \(a+b=10\)。</p>
+      <div class="chapter-formula">\[(10+a)(10+b)=100+10(a+b)+ab=200+ab\]</div>
+      <p><b>百位</b>为 2，<b>十位和个位</b>直接取 \(a\times b\)。</p>
+    `
+  },
+  {
+    title: "30+m数",
+    body: String.raw`
+      <p>两个乘数之和为 29 到 34。令 \(m=(10+a+10+b)-30=a+b-10\)。</p>
+      <div class="chapter-formula">\[(10+a)(10+b)=200+10m+ab\]</div>
+      <div class="chapter-formula">\[ab=10q+r\quad\Rightarrow\quad (10+a)(10+b)=200+10(q+m)+r\]</div>
+      <p><b>个位</b>为 \(r\)，即 \(a\times b\) 的个位；<b>十位</b>为 \(q+m\)，即 \(a\times b\) 的十位加 \(m\)。</p>
+      <p>本章排除前面章节和弱规律数。</p>
+    `
+  },
+  {
+    title: "弱规律数",
+    body: String.raw`
+      <p>规律弱，优先专项练习和直接记忆。</p>
+      <div class="chapter-formula">\[16\times19,\quad17\times18,\quad17\times19,\quad18\times19\]</div>
+    `
+  }
+];
+
+function showChapterInfo(chapterIndex) {
+  if (mode !== "normal" || activePracticeStarted) return;
+  const modal = document.getElementById("chapter-info-modal");
+  const content = document.getElementById("chapter-info-content");
+  const info = chapterInfoList[chapterIndex];
+  if (!modal || !content || !info) return;
+
+  content.innerHTML = `
+    <div class="chapter-info-title">${escapeHtml(info.title)}</div>
+    <div class="chapter-info-body">${info.body}</div>
+  `;
+  modal.classList.remove("hidden");
+
+  if (window.MathJax) {
+    const typeset = () => {
+      if (typeof window.MathJax.typesetPromise === "function") {
+        return window.MathJax.typesetPromise([content]).catch(() => {});
+      }
+      return Promise.resolve();
+    };
+
+    if (window.MathJax.startup && window.MathJax.startup.promise) {
+      window.MathJax.startup.promise.then(typeset).catch(() => {});
+    } else {
+      typeset();
+    }
+  }
+}
+
+function closeChapterInfo() {
+  const modal = document.getElementById("chapter-info-modal");
+  if (modal) modal.classList.add("hidden");
+}
+
+
+function savePassLevels() {
+  localStorage.setItem("chapterPassLevels", JSON.stringify(passLevels));
+}
+
+function saveWrongState() {
+  localStorage.setItem("wrongProblems", JSON.stringify(reviewList));
+  localStorage.setItem("wrongMeta", JSON.stringify(wrongMeta));
+}
+
+function problemLevel(problem) {
+  return progressMap[keyOf(problem)] || 0;
+}
+
+function chapterKeys(chapterIndex) {
+  return new Set(chapters[chapterIndex].problems.map(keyOf));
+}
+
+function chapterWrongKeys(chapterIndex) {
+  const keys = chapterKeys(chapterIndex);
+  return reviewList.filter(k => keys.has(k));
+}
+
+function chapterAllAtLevel(chapterIndex, level) {
+  return chapters[chapterIndex].problems.every(p => problemLevel(p) >= level);
+}
+
+function isUnlocked(chapterIndex) {
+  return chapterIndex === 0 || (passLevels[chapterIndex - 1] || 0) >= 1;
+}
+
+function requiresStreak(level) {
+  return level >= 2;
+}
+
+function chapterPassText(chapterIndex) {
+  const lv = passLevels[chapterIndex] || 0;
+  return lv > 0 ? `✓ ${levelName(lv)}` : "";
+}
+
+function findChapterIndexByKey(key) {
+  for (let i = 0; i < chapters.length; i++) {
+    if (chapters[i].problems.some(p => keyOf(p) === key)) return i;
+  }
+  return -1;
+}
+
+function migrateStorageToNormalizedKeys() {
+  const newMap = {};
+  for (const [k, v] of Object.entries(progressMap || {})) {
+    const [a, b] = (k || "").split("x").map(Number);
+    if (Number.isFinite(a) && Number.isFinite(b)) {
+      const nk = normKey(a, b);
+      newMap[nk] = Math.max(newMap[nk] || 0, Number(v) || 0);
+    }
+  }
+  progressMap = newMap;
+  localStorage.setItem("progressMap", JSON.stringify(progressMap));
+
+  const normalized = [];
+  const newMeta = {};
+  for (const raw of reviewList || []) {
+    const [a, b] = (raw || "").split("x").map(Number);
+    if (!Number.isFinite(a) || !Number.isFinite(b)) continue;
+    const key = normKey(a, b);
+    if (!normalized.includes(key)) normalized.push(key);
+    newMeta[key] = normalizeWrongMeta(wrongMeta[raw] || wrongMeta[key] || {}, key);
+  }
+  reviewList = normalized;
+  wrongMeta = newMeta;
+  saveWrongState();
+}
+
+function applyChapterCollapsed() {
+  document.body.classList.toggle("chapter-collapsed", chapterCollapsed);
+}
+
+function toggleChapterBox() {
+  chapterCollapsed = !chapterCollapsed;
+  localStorage.setItem("chapterCollapsed", chapterCollapsed ? "1" : "0");
+  applyChapterCollapsed();
+  updateChapterBox();
+}
+
+function showLockHint() {
+  showToast("请解锁前面关卡");
+}
+
+function showToast(text) {
+  let toast = document.getElementById("soft-toast");
+  if (!toast) {
+    toast = document.createElement("div");
+    toast.id = "soft-toast";
+    document.body.appendChild(toast);
+  }
+  toast.textContent = text;
+  toast.classList.remove("show");
+  void toast.offsetWidth;
+  toast.classList.add("show");
+  clearTimeout(showToast.timer);
+  showToast.timer = setTimeout(() => toast.classList.remove("show"), 1500);
+}
+
+function selectChapter(chapterIndex) {
+  if (!isUnlocked(chapterIndex)) {
+    showLockHint();
+    return;
+  }
+  currentChapterIndex = chapterIndex;
+  currentOrderedPosition = -1;
+  chapterCollapsed = true;
+  localStorage.setItem("chapterCollapsed", "1");
+  localStorage.setItem("currentChapterIndex", String(chapterIndex));
+  setMode("normal");
+  buildSession(true);
+  resetUI();
+  updateChapterBox(true);
+}
+
+function buildSession(resetStreak = false) {
+  const oldLevel = session.level;
+  const level = currentLevel();
+  const chapter = chapters[currentChapterIndex];
+  const wrongKeys = new Set(chapterWrongKeys(currentChapterIndex));
+
+  // 优先出当前难度下还没达标的非错题；全部达标后再推送错题
+  const newProblems = chapter.problems.filter(p => problemLevel(p) < level && !wrongKeys.has(keyOf(p)));
+  const wrongProblems = mode === "normal" ? [] : chapter.problems.filter(p => wrongKeys.has(keyOf(p)));
+
+  session.chapterIndex = currentChapterIndex;
+  session.level = level;
+  session.newQueue = shuffleCopy(newProblems);
+  session.wrongQueue = shuffleCopy(wrongProblems);
+  session.practiceQueue = [];
+
+  if (session.newQueue.length === 0 && session.wrongQueue.length === 0) {
+    if ((passLevels[currentChapterIndex] || 0) >= level) {
+      session.practiceQueue = shuffleCopy(chapter.problems);
+    } else if (requiresStreak(level)) {
+      session.newQueue = shuffleCopy(chapter.problems);
+    }
+  }
+
+  if (resetStreak || oldLevel !== level) session.streak = 0;
+}
+
+function ensureSession() {
+  const level = currentLevel();
+  if (session.chapterIndex !== currentChapterIndex || session.level !== level) {
+    buildSession(true);
+  }
+}
+
+function nextProblemFromSession() {
+  ensureSession();
+
+  if (session.newQueue.length === 0 && session.wrongQueue.length === 0 && session.practiceQueue.length === 0) {
+    checkChapterPass(currentChapterIndex, false);
+    buildSession(false);
+  }
+
+  if (session.newQueue.length > 0) return session.newQueue.shift();
+  if (mode !== "normal" && session.wrongQueue.length > 0) return session.wrongQueue.shift();
+
+  if (session.practiceQueue.length === 0) {
+    session.practiceQueue = shuffleCopy(chapters[currentChapterIndex].problems);
+  }
+  return session.practiceQueue.shift();
+}
+
+function updateChapterBox(preserveScroll = true) {
+  const box = document.getElementById("chapter-box");
+  if (!box) return;
+
+  const oldList = box.querySelector(".chapter-list");
+  const oldScrollTop = oldList ? oldList.scrollTop : 0;
+  applyChapterCollapsed();
+
+  let html = `<div class="chapter-inner">`;
+  html += `<div class="chapter-head">`;
+  html += `<div class="chapter-title">章节顺序</div>`;
+  html += `<button class="chapter-toggle" type="button" onclick="toggleChapterBox()" aria-label="展开或收回章节栏">${chapterCollapsed ? "›" : "‹"}</button>`;
+  html += `</div>`;
+  html += `<div class="chapter-list">`;
+
+  const level = currentLevel();
+  html += `<div class="chapter-total">当前难度：${levelName(level)}</div>`;
+
+  chapters.forEach((ch, i) => {
+    const active = i === currentChapterIndex ? " active" : "";
+    const locked = !isUnlocked(i);
+    const lockedClass = locked ? " locked" : "";
+    const passed = (passLevels[i] || 0) > 0;
+    const passedClass = passed ? " passed" : "";
+    const passText = chapterPassText(i);
+    const handler = locked ? "showLockHint()" : `selectChapter(${i})`;
+
+    html += `<button class="chapter-item${active}${passedClass}${lockedClass}" type="button" onclick="${handler}">`;
+    html += `<div class="chapter-name-row">`;
+    html += `<div class="chapter-name">${ch.name}</div>`;
+    if (locked) html += `<span class="chapter-lock-badge">未解锁</span>`;
+    else if (passed) html += `<span class="chapter-pass-badge">${passText}</span>`;
+    html += `</div>`;
+    html += `<div class="chapter-hint">${ch.hint}</div>`;
+    html += `<div class="chapter-count">${ch.problems.length}题</div>`;
+    if (locked) html += `<div class="chapter-lock-mask">请先通过前一章</div>`;
+    html += `</button>`;
+  });
+
+  html += `</div></div>`;
+  box.innerHTML = html;
+
+  if (preserveScroll) {
+    const newList = box.querySelector(".chapter-list");
+    if (newList) requestAnimationFrame(() => { newList.scrollTop = oldScrollTop; });
+  }
+}
+
+function updateTimeout() {
+  const select = document.getElementById("speedSelect");
+  timeout = parseInt(select.value, 10);
+  if (!Number.isFinite(timeout)) timeout = 10;
+  buildSession(true);
+  updateChapterBox(true);
+}
+
+function animateSwitch() {
+  const panel = document.getElementById("main-panel");
+  if (!panel) return;
+  panel.classList.remove("view-animate");
+  void panel.offsetWidth;
+  panel.classList.add("view-animate");
+}
+
+function showPracticeView() {
+  document.getElementById("practice-view").style.display = "flex";
+  document.getElementById("progress-view").style.display = "none";
+  const usageView = document.getElementById("usage-view");
+  if (usageView) usageView.style.display = "none";
+  animateSwitch();
+}
+
+function showProgressView() {
+  stopStaminaTimer();
+  document.getElementById("practice-view").style.display = "none";
+  document.getElementById("progress-view").style.display = "block";
+  const usageView = document.getElementById("usage-view");
+  if (usageView) usageView.style.display = "none";
+  animateSwitch();
+}
+
+function showUsageView() {
+  stopStaminaTimer();
+  document.getElementById("practice-view").style.display = "none";
+  document.getElementById("progress-view").style.display = "none";
+  const usageView = document.getElementById("usage-view");
+  if (usageView) usageView.style.display = "block";
+  animateSwitch();
+}
+
+function placeReviewBoxBelowControls() {
+  const reviewBox = document.getElementById("review-box");
+  const controls = document.getElementById("controls");
+  if (!reviewBox || !controls) return reviewBox;
+
+  if (controls.nextElementSibling !== reviewBox) {
+    controls.insertAdjacentElement("afterend", reviewBox);
+  }
+  return reviewBox;
+}
+
+
+
+function clearQuestionTimer() {
+  clearInterval(timer);
+  timer = null;
+}
+
+function startQuestionTimer() {
+  const bar = document.getElementById("bar-inner");
+  clearQuestionTimer();
+  timerElapsed = 0;
+  if (bar) bar.style.width = "0%";
+  timer = setInterval(tickQuestionTimer, 100);
+}
+
+function tickQuestionTimer() {
+  const bar = document.getElementById("bar-inner");
+  timerElapsed += 0.1;
+  if (bar) bar.style.width = `${Math.min((timerElapsed / timeout) * 100, 100)}%`;
+  if (timerElapsed >= timeout) handleTimeout();
+}
+
+function pauseQuestionTimer() {
+  clearQuestionTimer();
+}
+
+function resumeQuestionTimer() {
+  if (answered || timer) return;
+  timer = setInterval(tickQuestionTimer, 100);
+}
+
+function handleTimeout() {
+  clearQuestionTimer();
+  const input = document.getElementById("answer");
+  const result = document.getElementById("result");
+  if (input) input.disabled = true;
+  if (result) result.textContent = `✗ 超时！正确答案：${currentAns}`;
+
+  handleWrongAnswer();
+  if (mode === "normal") recordPracticeResult(false);
+  if (mode === "review") updateWrongReviewProgress("重置");
+  answered = true;
+  recordPauseCheckpoint();
+
+  const submitBtn = document.getElementById("submitBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  if (submitBtn) submitBtn.disabled = true;
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = "下一题";
+  }
+  updatePauseButton();
+  updateReviewBox();
+  updateChapterBox();
+}
+
+function updatePauseButton() {
+  const btn = document.getElementById("pauseBtn");
+  if (!btn) return;
+  const shouldShow = pauseAvailable && (mode === "normal" || mode === "review") && activePracticeStarted;
+  btn.hidden = !shouldShow;
+  btn.disabled = !shouldShow;
+}
+
+function resetPauseState() {
+  pauseAnsweredCount = 0;
+  pauseAvailable = false;
+  pauseWasDuringQuestion = false;
+  updatePauseButton();
+  hidePauseConfirm();
+}
+
+function recordPauseCheckpoint() {
+  if (mode !== "normal" && mode !== "review") return;
+  pauseAnsweredCount += 1;
+  if (pauseAnsweredCount >= PAUSE_INTERVAL) {
+    pauseAnsweredCount = 0;
+    pauseAvailable = true;
+    showToast("已完成7题，可暂停");
+  }
+  updatePauseButton();
+}
+
+function hidePauseConfirm() {
+  const modal = document.getElementById("pause-confirm");
+  if (modal) modal.classList.add("hidden");
+}
+
+function requestPauseBreak() {
+  if (!pauseAvailable) return;
+  pauseWasDuringQuestion = !answered;
+  if (pauseWasDuringQuestion) pauseQuestionTimer();
+  const modal = document.getElementById("pause-confirm");
+  if (!modal) {
+    confirmPauseBreak();
+    return;
+  }
+  modal.classList.remove("hidden");
+  const cancelButton = modal.querySelector(".pause-confirm-actions button:first-child");
+  if (cancelButton) cancelButton.focus();
+}
+
+function cancelPauseBreak() {
+  hidePauseConfirm();
+  pauseAvailable = false;
+  updatePauseButton();
+  if (pauseWasDuringQuestion && !answered) resumeQuestionTimer();
+  pauseWasDuringQuestion = false;
+}
+
+function confirmPauseBreak() {
+  hidePauseConfirm();
+  clearQuestionTimer();
+  pauseAvailable = false;
+  pauseWasDuringQuestion = false;
+  stopPracticeToStart();
+}
+
+function stopPracticeToStart() {
+  const wasReview = mode === "review";
+  resetUI();
+
+  if (wasReview) {
+    setMode("review");
+    const question = document.getElementById("question");
+    if (question) renderReviewTitle();
+    const reviewBox = placeReviewBoxBelowControls();
+    if (reviewBox) reviewBox.style.display = "block";
+    updateWrongReviewProgress();
+    updateReviewBox();
+  }
+
+  showToast("已结束本轮练习");
+  updatePauseButton();
+}
+
+function showStartConfirm(callback) {
+  const modal = document.getElementById("start-confirm");
+  if (!modal) {
+    if (typeof callback === "function") callback();
+    return;
+  }
+  pendingStartCallback = callback;
+  modal.classList.remove("hidden");
+  const startButton = modal.querySelector(".start-confirm-actions button:last-child");
+  if (startButton) startButton.focus();
+}
+
+function hideStartConfirm() {
+  const modal = document.getElementById("start-confirm");
+  if (modal) modal.classList.add("hidden");
+  pendingStartCallback = null;
+}
+
+function confirmStartPractice() {
+  const callback = pendingStartCallback;
+  hideStartConfirm();
+  activePracticeStarted = true;
+  updatePracticeStateClass();
+  if (typeof callback === "function") callback();
+}
+
+function resetUI() {
+  showPracticeView();
+  placeReviewBoxBelowControls();
+  activePracticeStarted = false;
+  pendingStartCallback = null;
+  const question = document.getElementById("question");
+  if (mode === "normal") renderChapterStartTitle();
+  else if (mode === "review") renderReviewTitle();
+  else {
+    question.classList.remove("question-wrong");
+    question.textContent = currentChapterTitle();
+  }
+  document.getElementById("answer").value = "";
+  document.getElementById("answer").disabled = true;
+  document.getElementById("bar-inner").style.width = "0%";
+  document.getElementById("result").textContent = "";
+  document.getElementById("review-box").style.display = "none";
+  if (mode !== "review") document.getElementById("review-box").innerHTML = "";
+  hideNumberPad();
+  hideStartConfirm();
+  hidePauseConfirm();
+  resetPracticeStats();
+  const submitBtn = document.getElementById("submitBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  if (submitBtn) submitBtn.disabled = true;
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = "开    始";
+  }
+  hideSlipButton(true);
+  answered = true;
+  clearQuestionTimer();
+  resetPauseState();
+  updatePracticeStateClass();
+  if (mode !== "review") stopStaminaTimer();
+  updateChapterBox();
+}
+
+function returnToMain() {
+  setMode("normal");
+  // 如果在离开练习模式前保存了章节索引，返回主界面时恢复。
+  if (previousChapterIndex !== null) {
+    // 如果之前选择的章节仍然处于解锁状态，则恢复到该章节，否则回到第一个解锁章节
+    if (isUnlocked(previousChapterIndex)) {
+      currentChapterIndex = previousChapterIndex;
+    } else {
+      currentChapterIndex = firstUnlockedChapter();
+    }
+    localStorage.setItem("currentChapterIndex", String(currentChapterIndex));
+  }
+  resetUI();
+}
+
+function pickQuestion() {
+  if (mode === "review") {
+    const keys = availableWrongKeys();
+    if (keys.length === 0) return null;
+    const key = keys[Math.floor(Math.random() * keys.length)];
+    const chIndex = findChapterIndexByKey(key);
+    if (chIndex >= 0) currentChapterIndex = chIndex;
+    return key.split("x").map(Number);
+  }
+  return nextProblemFromSession();
+}
+
+function saveWrong(key) {
+  const [a, b] = key.split("x").map(Number);
+  const kk = normKey(a, b);
+  resetWrongToRed(kk);
+}
+
+function markWrongCorrect(key) {
+  const [a, b] = key.split("x").map(Number);
+  const kk = normKey(a, b);
+  const index = reviewList.indexOf(kk);
+  if (index === -1) return true;
+
+  const meta = wrongStage(kk);
+  meta.level = clampNumber(meta.level, 1, 3, 1);
+  meta.step = clampNumber(meta.step, 0, WRONG_REVIEW_STAGES.length - 1, 0);
+
+  if (currentLevel() < meta.level) {
+    wrongMeta[kk] = meta;
+    saveWrongState();
+    return false;
+  }
+
+  if (!isWrongDue(kk)) {
+    wrongMeta[kk] = meta;
+    saveWrongState();
+    return false;
+  }
+
+  if (meta.step >= WRONG_REVIEW_STAGES.length - 1) {
+    reviewList.splice(index, 1);
+    delete wrongMeta[kk];
+    saveWrongState();
+    return true;
+  }
+
+  meta.step += 1;
+  meta.dueAt = nowMs() + stageDelayMs(meta.step);
+  wrongMeta[kk] = meta;
+  saveWrongState();
+  return false;
+}
+
+function saveProgress(key, level) {
+  if (!progressMap[key] || level > progressMap[key]) {
+    progressMap[key] = level;
+    localStorage.setItem("progressMap", JSON.stringify(progressMap));
+  }
+}
+
+function updateWrongReviewProgress(deltaText = "") {
+  const inner = document.getElementById("practice-progress-inner");
+  const label = document.getElementById("practice-progress-label");
+  const delta = document.getElementById("practice-progress-delta");
+  if (!inner || !label || !delta) return;
+
+  // 取本次巩固会话的所有键，如果为空则用错题列表
+  const sessionKeys = reviewSessionKeys.length > 0 ? reviewSessionKeys : reviewList;
+  const sessionSet = new Set(sessionKeys);
+  const stages = WRONG_REVIEW_STAGES.length;
+  // 计算总进度和完成进度。每道错题有若干阶段（红橙黄绿等），根据当前阶段数目计算完成比例。
+  let totalSegments = sessionSet.size * stages;
+  let doneSegments = 0;
+  sessionSet.forEach(key => {
+    // 如果该题已经不在错题列表中，视为所有阶段完成
+    if (!reviewList.includes(key)) {
+      doneSegments += stages;
+    } else {
+      const meta = wrongStage(key);
+      // meta.step 表示已完成的阶段数（0 表示刚错）。
+      const segs = Math.max(0, Math.min(stages, meta.step));
+      doneSegments += segs;
+    }
+  });
+  const ratio = totalSegments > 0 ? doneSegments / totalSegments : 1;
+
+  // 更新进度条宽度
+  inner.style.width = `${(Math.max(0, Math.min(1, ratio)) * 100).toFixed(2)}%`;
+  // 显示错题进度百分比
+  label.textContent = sessionSet.size > 0 ? `错题进度：${(ratio * 100).toFixed(2)}%` : "错题进度：已清空";
+
+  if (deltaText) {
+    delta.textContent = deltaText;
+    delta.classList.remove("show", "positive", "negative");
+    void delta.offsetWidth;
+    delta.classList.add("show", deltaText.startsWith("+") ? "positive" : "negative");
+  }
+}
+
+function enterReviewMode() {
+  if (reviewList.length === 0) {
+    showToast("很好, 你没有错题!");
+    return;
+  }
+  // 在进入错题巩固之前保存当前章节索引，之后返回主界面时再恢复
+  previousChapterIndex = currentChapterIndex;
+  setMode("review");
+  reviewSessionKeys = Array.from(new Set(reviewList));
+  resetUI();
+  renderReviewTitle();
+
+  const reviewBox = placeReviewBoxBelowControls();
+  if (!reviewBox) return;
+
+  reviewBox.style.display = "block";
+  updateWrongReviewProgress();
+  updateReviewBox();
+}
+
+function wrongDotsHtml(key) {
+  const meta = wrongStage(key);
+  const current = clampNumber(meta.step, 0, WRONG_REVIEW_STAGES.length - 1, 0);
+  let html = "";
+  WRONG_REVIEW_STAGES.forEach((stage, i) => {
+    let state = "locked";
+    if (i < current) state = "done";
+    else if (i === current && isWrongDue(key)) state = "active";
+    html += `<span class="wrong-dot ${stage.color} ${state}" title="${stage.label}"></span>`;
+  });
+  return html;
+}
+
+function wrongDueLabel(key) {
+  const meta = wrongStage(key);
+  if (isWrongDue(key)) return "现在可做";
+  return `${compactFutureTime(meta.dueAt)}后可做`;
+}
+
+function updateReviewBox() {
+  if (mode !== "review") return;
+
+  const box = document.getElementById("review-box");
+  if (!box) return;
+
+  if (reviewList.length === 0) {
+    box.innerHTML = `<div class="review-tip">很好, 你没有错题!</div>`;
+    updateStaminaBattery();
+    return;
+  }
+
+  const availableCount = availableWrongKeys().length;
+  let html = `<div class="review-tip"><b>错题巩固</b>：只推送已到复习时间的错题。红=现在，橙=5min后，黄=1h后，绿=1天后。可做为正常亮度，未到时间会变暗。</div>`;
+  if (availableCount === 0) {
+    const nearest = nearestWrongDueAt();
+    html += `<div class="review-tip"><b>当前状态</b>：暂无可做错题。${nearest ? `请在${compactFutureTime(nearest)}后前来巩固。` : ""}</div>`;
+  }
+  html += `<div class="wrong-list">`;
+  reviewList.forEach(key => {
+    const [a, b] = key.split("x");
+    const meta = wrongStage(key);
+    const dueClass = isWrongDue(key) ? " due" : " locked";
+    html += `<div class="wrong-row${dueClass}">`;
+    html += `<div class="wrong-problem">${a} × ${b}</div>`;
+    html += `<div class="wrong-state"><span class="wrong-level">${levelName(meta.level)}</span><span class="wrong-dots">${wrongDotsHtml(key)}</span><span class="wrong-due-label">${wrongDueLabel(key)}</span></div>`;
+    html += `</div>`;
+  });
+  html += `</div>`;
+  box.innerHTML = html;
+  updateStaminaBattery();
+}
+
+function toggleNumberPad() {
+  const pad = document.getElementById("number-pad");
+  if (pad) pad.classList.toggle("hidden");
+}
+
+function hideNumberPad() {
+  const pad = document.getElementById("number-pad");
+  if (pad) pad.classList.add("hidden");
+}
+
+function appendDigit(digit) {
+  const input = document.getElementById("answer");
+  if (!input || input.disabled) return;
+  input.value += digit;
+  input.focus();
+}
+
+function deleteDigit() {
+  const input = document.getElementById("answer");
+  if (!input || input.disabled) return;
+  input.value = input.value.slice(0, -1);
+  input.focus();
+}
+
+function numberPadSubmit() {
+  if (!answered) submitAnswer();
+}
+
+function mainAction() {
+  if (!answered) {
+    submitAnswer();
+    return;
+  }
+  next();
+}
+
+function next() {
+  if (!answered) {
+    alert("请先提交本题");
+    return;
+  }
+  hideSlipButton(true);
+
+  if (mode === "normal" && !isUnlocked(currentChapterIndex)) {
+    showLockHint();
+    return;
+  }
+
+  if (mode === "normal" && onlyWrongLeftInCurrentChapter()) {
+    showOnlyWrongLeftHint();
+    return;
+  }
+
+  if (mode === "review" && availableWrongKeys().length === 0) {
+    showReviewWaitHint();
+    updateReviewBox();
+    return;
+  }
+
+  if ((mode === "normal" || mode === "review") && !activePracticeStarted) {
+    showStartConfirm(() => next());
+    return;
+  }
+
+  activePracticeStarted = true;
+  updatePracticeStateClass();
+  clearQuestionTimer();
+  const picked = pickQuestion();
+  if (!picked) {
+    if (mode === "review") showReviewWaitHint();
+    else showOnlyWrongLeftHint();
+    updateReviewBox();
+    return;
+  }
+
+  const [a, b] = picked;
+  currentProblem = [a, b];
+  currentAns = a * b;
+  currentQuestion = normKey(a, b);
+  currentIsWrongProblem = mode === "review" || reviewList.includes(currentQuestion);
+
+  const input = document.getElementById("answer");
+  const result = document.getElementById("result");
+  const bar = document.getElementById("bar-inner");
+
+  renderQuestion(a, b, currentIsWrongProblem);
+  input.value = "";
+  input.disabled = false;
+  hideNumberPad();
+  input.focus();
+  result.textContent = "";
+  bar.style.width = "0%";
+  answered = false;
+
+  const submitBtn = document.getElementById("submitBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  if (submitBtn) submitBtn.disabled = true;
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = "提交";
+  }
+  hideSlipButton(true);
+
+  startQuestionTimer();
+  updatePauseButton();
+}
+
+function handleWrongAnswer() {
+  if (mode === "review") {
+    const metaBefore = cloneWrongMeta(wrongStage(currentQuestion));
+    resetWrongToRed(currentQuestion);
+    showSlipButton(currentQuestion, metaBefore);
+    showToast("已重置到红色节点；若是笔误，可点击“笔误”恢复进度");
+    updateStaminaBattery();
+    return;
+  }
+
+  hideSlipButton(true);
+  saveWrong(currentQuestion);
+  if (mode === "normal") {
+    session.streak = 0;
+    session.wrongQueue = session.wrongQueue.filter(p => keyOf(p) !== currentQuestion);
+    session.newQueue = session.newQueue.filter(p => keyOf(p) !== currentQuestion);
+  }
+}
+
+function submitAnswer() {
+  if (answered) return;
+  clearQuestionTimer();
+
+  const input = document.getElementById("answer");
+  const result = document.getElementById("result");
+  const value = input.value.trim();
+  input.disabled = true;
+  answered = true;
+
+  if (value == currentAns) {
+    hideSlipButton(true);
+    result.textContent = "✓ 正确！";
+    const level = currentLevel();
+    saveProgress(currentQuestion, level);
+    const wrongCleared = markWrongCorrect(currentQuestion);
+
+    if (mode === "normal") {
+      session.streak += 1;
+      recordPracticeResult(true);
+      if (wrongCleared) {
+        session.wrongQueue = session.wrongQueue.filter(p => keyOf(p) !== currentQuestion);
+      }
+      checkChapterPass(currentChapterIndex, true);
+    } else if (mode === "review") {
+      updateWrongReviewProgress("+1次");
+      const chIndex = findChapterIndexByKey(currentQuestion);
+      if (chIndex >= 0) checkChapterPass(chIndex, true);
+    }
+  } else {
+    result.textContent = `✗ 正确答案：${currentAns}`;
+    handleWrongAnswer();
+    if (mode === "normal") recordPracticeResult(false);
+    if (mode === "review") updateWrongReviewProgress("重置");
+  }
+
+  recordPauseCheckpoint();
+
+  const submitBtn = document.getElementById("submitBtn");
+  const nextBtn = document.getElementById("nextBtn");
+  if (submitBtn) submitBtn.disabled = true;
+  if (nextBtn) {
+    nextBtn.disabled = false;
+    nextBtn.textContent = "下一题";
+  }
+  updatePauseButton();
+  updateReviewBox();
+
+  if (mode === "review" && reviewList.length === 0) {
+    result.textContent = "错题已清空";
+    pauseAvailable = false;
+    updatePauseButton();
+    document.getElementById("nextBtn").disabled = true;
+    document.getElementById("nextBtn").textContent = "完成";
+  } else if (mode === "review" && availableWrongKeys().length === 0) {
+    const nearest = nearestWrongDueAt();
+    if (nearest) result.textContent = `本轮可做错题已完成。请在${compactFutureTime(nearest)}后前来巩固`;
+  }
+
+  updateChapterBox();
+}
+
+function checkChapterPass(chapterIndex, animate) {
+  const level = currentLevel();
+  if ((passLevels[chapterIndex] || 0) >= level) return false;
+  if (!chapterAllAtLevel(chapterIndex, level)) return false;
+  if (chapterWrongKeys(chapterIndex).length > 0) return false;
+  if (requiresStreak(level) && session.streak < chapters[chapterIndex].problems.length) return false;
+
+  passLevels[chapterIndex] = level;
+  savePassLevels();
+
+  if (animate) showChapterClearAnimation(chapterIndex, level);
+  updateChapterBox(true);
+  return true;
+}
+
+function showChapterClearAnimation(chapterIndex, level) {
+  const chapter = chapters[chapterIndex];
+  if (!chapter) return;
+
+  let overlay = document.getElementById("chapter-clear-toast");
+  if (!overlay) {
+    overlay = document.createElement("div");
+    overlay.id = "chapter-clear-toast";
+    document.body.appendChild(overlay);
+  }
+
+  const count = level >= 3 ? 18 : level >= 2 ? 10 : 0;
+  const particles = Array.from({ length: count }, (_, i) => `<span class="clear-particle p${i + 1}"></span>`).join("");
+
+  overlay.innerHTML = `
+    <div class="clear-card level-${level}">
+      <div class="clear-ring"></div>
+      <div class="clear-mark">✓</div>
+      <div class="clear-title">章节通关</div>
+      <div class="clear-level">${levelName(level)}达成</div>
+      <div class="clear-name">${chapter.name}</div>
+      <div class="clear-particles">${particles}</div>
+    </div>
+  `;
+
+  overlay.classList.remove("show", "level-1", "level-2", "level-3");
+  void overlay.offsetWidth;
+  overlay.classList.add("show", `level-${level}`);
+
+  clearTimeout(showChapterClearAnimation.hideTimer);
+  showChapterClearAnimation.hideTimer = setTimeout(() => {
+    overlay.classList.remove("show");
+  }, level >= 3 ? 2300 : level >= 2 ? 2000 : 1650);
+}
+
+document.addEventListener("keydown", e => {
+  const chapterInfoModal = document.getElementById("chapter-info-modal");
+  if (chapterInfoModal && !chapterInfoModal.classList.contains("hidden")) {
+    if (e.key === "Escape") closeChapterInfo();
+    if (e.key === "Enter" || e.key === "Escape") e.preventDefault();
+    return;
+  }
+
+  if (e.key !== "Enter") return;
+
+  const startConfirm = document.getElementById("start-confirm");
+  if (startConfirm && !startConfirm.classList.contains("hidden")) {
+    e.preventDefault();
+    confirmStartPractice();
+    return;
+  }
+
+  const pauseConfirm = document.getElementById("pause-confirm");
+  if (pauseConfirm && !pauseConfirm.classList.contains("hidden")) {
+    e.preventDefault();
+    return;
+  }
+
+  if (mode === "progress") return;
+
+  const activeTag = document.activeElement ? document.activeElement.tagName : "";
+  if (activeTag === "SELECT") return;
+
+  const nextBtn = document.getElementById("nextBtn");
+
+  if (nextBtn && !nextBtn.disabled) {
+    e.preventDefault();
+    mainAction();
+  }
+});
+
+
+function populateProgressFilterOptions() {
+  const select = document.getElementById("progressFilterSelect");
+  if (!select) return;
+
+  const validValues = new Set(["all", ...chapters.map((_, i) => String(i))]);
+  if (!validValues.has(progressFilter)) progressFilter = "all";
+
+  let html = `<option value="all">全部</option>`;
+  chapters.forEach((ch, i) => {
+    html += `<option value="${i}">${stripChapterNumber(ch.name)}</option>`;
+  });
+  select.innerHTML = html;
+  select.value = progressFilter;
+}
+
+function changeProgressFilter() {
+  const select = document.getElementById("progressFilterSelect");
+  progressFilter = select ? select.value : "all";
+  localStorage.setItem("progressFilter", progressFilter);
+  renderProgressTable();
+}
+
+function progressProblemsForFilter() {
+  if (progressFilter === "all") return allChapterProblems();
+  const idx = Number(progressFilter);
+  if (!Number.isFinite(idx) || !chapters[idx]) return allChapterProblems();
+  return chapters[idx].problems;
+}
+
+function renderProgressSummary() {
+  const box = document.getElementById("progressSummary");
+  if (!box) return;
+
+  const problems = progressProblemsForFilter();
+  const ratio = progressRatioForProblems(problems);
+  const title = progressFilter === "all" ? "总进度" : `${stripChapterNumber(chapters[Number(progressFilter)].name)} 进度`;
+
+  box.innerHTML = `
+    <div class="progress-summary-card">
+      <div class="progress-summary-top">
+        <span>${title}</span>
+        <span>${progressPercentText(ratio)}</span>
+      </div>
+      <div class="progress-summary-bar"><div style="width:${(Math.max(0, Math.min(1, ratio)) * 100).toFixed(2)}%"></div></div>
+    </div>
+  `;
+}
+
+function enterProgressMode() {
+  // 保存当前章节索引，返回主界面时恢复
+  previousChapterIndex = currentChapterIndex;
+  setMode("progress");
+  clearQuestionTimer();
+  answered = true;
+  resetPauseState();
+  showProgressView();
+  hideNumberPad();
+  populateProgressFilterOptions();
+  renderProgressTable();
+  updateChapterBox();
+}
+
+function enterUsageMode() {
+  previousChapterIndex = currentChapterIndex;
+  setMode("usage");
+  clearQuestionTimer();
+  answered = true;
+  resetPauseState();
+  hideNumberPad();
+  showUsageView();
+  updateChapterBox();
+}
+
+function renderProgressTable() {
+  const box = document.getElementById("progressContainer");
+  if (!box) return;
+
+  const selectedIndex = progressFilter === "all" ? null : Number(progressFilter);
+  const selectedKeys = selectedIndex === null || !chapters[selectedIndex] ? null : chapterKeys(selectedIndex);
+
+  renderProgressSummary();
+
+  let html = '<table class="progress-table"><thead><tr><th rowspan="2">乘数</th><th colspan="' + cols.length + '">被乘数</th></tr><tr>';
+  cols.forEach(c => html += `<th>${c}</th>`);
+  html += '</tr></thead><tbody>';
+
+  rows.forEach(r => {
+    html += `<tr><th>${r}×</th>`;
+    cols.forEach(c => {
+      if (r > c) {
+        html += '<td class="progress-empty"></td>';
+        return;
+      }
+
+      const nk = normKey(r, c);
+      const lv = progressMap[nk] || 0;
+      const prod = r * c;
+      const cls = ["cell-not-done", "cell-level1", "cell-level2", "cell-level3"][lv];
+
+      let extra = "";
+      if (selectedKeys) {
+        if (selectedKeys.has(nk)) extra += " progress-selected";
+        else extra += " progress-lowlight";
+      }
+
+      html += `<td class="${cls}${extra}">${prod}</td>`;
+    });
+    html += '</tr>';
+  });
+
+  box.innerHTML = html + '</tbody></table>';
+}
+
+
+function setupReviewHelpTip() {
+  const area = document.querySelector(".review-help-area");
+  const btn = document.querySelector(".review-help-btn");
+  if (!area || !btn || btn.dataset.bound === "1") return;
+  btn.dataset.bound = "1";
+
+  let pressTimer = null;
+  let longPressed = false;
+  const clearPressTimer = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+  const scheduleHide = () => {
+    clearTimeout(setupReviewHelpTip.hideTimer);
+    setupReviewHelpTip.hideTimer = setTimeout(() => area.classList.remove("show"), 2800);
+  };
+
+  btn.addEventListener("pointerdown", () => {
+    longPressed = false;
+    clearPressTimer();
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      area.classList.add("show");
+      scheduleHide();
+    }, 420);
+  });
+  btn.addEventListener("pointerup", clearPressTimer);
+  btn.addEventListener("pointercancel", clearPressTimer);
+  btn.addEventListener("pointerleave", clearPressTimer);
+  btn.addEventListener("click", () => {
+    if (longPressed) {
+      longPressed = false;
+      return;
+    }
+    area.classList.toggle("show");
+    if (area.classList.contains("show")) scheduleHide();
+  });
+}
+
+function setupProgressInfoTip() {
+  const area = document.getElementById("progress-info-area");
+  const btn = document.getElementById("progressInfoBtn");
+  if (!area || !btn) return;
+
+  let pressTimer = null;
+  const hide = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+    area.classList.remove("show");
+  };
+
+  btn.addEventListener("pointerdown", () => {
+    if (pressTimer) clearTimeout(pressTimer);
+    pressTimer = setTimeout(() => area.classList.add("show"), 420);
+  });
+  btn.addEventListener("pointerup", hide);
+  btn.addEventListener("pointercancel", hide);
+  btn.addEventListener("pointerleave", hide);
+  btn.addEventListener("click", () => {
+    area.classList.toggle("show");
+    clearTimeout(setupProgressInfoTip.hideTimer);
+    setupProgressInfoTip.hideTimer = setTimeout(() => area.classList.remove("show"), 2400);
+  });
+}
+
+function setupHelpTip() {
+  const area = document.getElementById("help-area");
+  const btn = document.getElementById("help-btn");
+  if (!area || !btn) return;
+
+  let pressTimer = null;
+  let longPressed = false;
+
+  const clearPressTimer = () => {
+    if (pressTimer) {
+      clearTimeout(pressTimer);
+      pressTimer = null;
+    }
+  };
+
+  const scheduleHide = () => {
+    clearTimeout(setupHelpTip.hideTimer);
+    setupHelpTip.hideTimer = setTimeout(() => area.classList.remove("show"), 2600);
+  };
+
+  btn.addEventListener("pointerdown", () => {
+    longPressed = false;
+    clearPressTimer();
+    pressTimer = setTimeout(() => {
+      longPressed = true;
+      area.classList.add("show");
+      scheduleHide();
+    }, 420);
+  });
+
+  btn.addEventListener("pointerup", clearPressTimer);
+  btn.addEventListener("pointercancel", clearPressTimer);
+  btn.addEventListener("pointerleave", clearPressTimer);
+
+  btn.addEventListener("click", () => {
+    if (longPressed) {
+      longPressed = false;
+      return;
+    }
+    area.classList.toggle("show");
+    if (area.classList.contains("show")) scheduleHide();
+  });
+}
+
+setMode(mode);
+updateTimeout();
+resetUI();
+
+  </script>
+</body>
+</html>
