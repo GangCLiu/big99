@@ -15,9 +15,9 @@
   --text: #f5f5f7;
   --muted: #aeb4bf;
   --topbar-h: 76px;
-  --mobile-topbar-h: 76px;
-  --mobile-chapter-w: min(78vw, 320px);
-  --mobile-handle-w: 40px;
+  --mobile-top-offset: 92px;
+  --mobile-drawer-w: min(238px, 68vw);
+  --mobile-drawer-h: min(42dvh, 360px);
   --chapter-w: 300px;
   --chapter-w-collapsed: 64px;
   --radius: 18px;
@@ -555,7 +555,7 @@ body.chapter-collapsed .chapter-toggle {
 .cell-level2   { background: #8b9098; }
 .cell-level3   { background: #f5f5f7; }
 
-@media (max-width: 900px) {
+@media (max-width: 720px) {
   body {
     overflow: auto;
   }
@@ -566,18 +566,25 @@ body.chapter-collapsed .chapter-toggle {
 
   #topbar {
     position: sticky;
+    top: 0;
+    z-index: 4300;
     height: auto;
-    min-height: var(--topbar-h);
+    min-height: 0;
+    padding: calc(env(safe-area-inset-top, 0px) + 9px) 10px 8px;
+    background: rgba(8, 8, 9, 0.98);
     align-items: flex-start;
     flex-direction: column;
-    padding: 14px 16px;
   }
 
-  #top-actions {
+  #top-left {
     width: 100%;
-    justify-content: flex-start;
-    flex-wrap: wrap;
-    gap: 10px;
+    justify-content: center;
+  }
+
+  #app-title {
+    font-size: 1.22rem;
+    line-height: 1.2;
+    letter-spacing: 0.08em;
   }
 
   #layout {
@@ -594,53 +601,90 @@ body.chapter-collapsed .chapter-toggle {
 
   #chapter-box {
     position: fixed;
-    top: var(--mobile-topbar-h);
-    z-index: 1500;
-    width: var(--mobile-chapter-w);
-    max-width: 320px;
-    max-height: calc(100vh - var(--mobile-topbar-h) - 18px);
+    left: 0;
+    top: var(--mobile-top-offset);
+    z-index: 4150;
+    width: var(--mobile-drawer-w);
+    max-width: var(--mobile-drawer-w);
+    max-height: var(--mobile-drawer-h);
     border-radius: 0 16px 16px 0;
-    left: calc(-1 * (var(--mobile-chapter-w) - var(--mobile-handle-w)));
-    opacity: 1;
-    pointer-events: auto;
-    transition: left 0.2s ease;
+    overflow: hidden;
+    transform: translateX(-105%);
+    pointer-events: none;
+    transition: transform 0.18s ease, box-shadow 0.18s ease;
   }
 
   body.mobile-chapter-open #chapter-box {
-    left: 0;
+    transform: translateX(0);
+    pointer-events: auto;
+    box-shadow: 18px 18px 56px rgba(0, 0, 0, 0.55);
   }
 
   .chapter-head {
-    padding: 10px 12px;
+    min-height: 38px;
+    padding: 7px 9px;
   }
 
   .chapter-title {
-    font-size: 1rem;
-  }
-
-  .chapter-list {
-    max-height: calc(100vh - var(--mobile-topbar-h) - 84px);
+    font-size: 0.92rem;
   }
 
   .chapter-toggle {
-    position: fixed;
-    top: calc(var(--mobile-topbar-h) + 8px);
-    left: 0;
-    z-index: 1600;
-    width: var(--mobile-handle-w);
-    height: 96px;
-    min-height: 96px;
-    padding: 8px 6px;
-    border-radius: 0 12px 12px 0;
-    writing-mode: vertical-rl;
-    letter-spacing: 0.12em;
-    font-size: 1rem;
-    line-height: 1;
-    transition: left 0.2s ease;
+    display: none;
   }
 
-  body.mobile-chapter-open .chapter-toggle {
-    left: var(--mobile-chapter-w);
+  .chapter-list {
+    max-height: calc(var(--mobile-drawer-h) - 38px);
+    padding: 7px;
+    overflow-y: auto;
+  }
+
+  .chapter-total {
+    font-size: 0.76rem;
+  }
+
+  .chapter-item {
+    margin-bottom: 6px;
+    padding: 8px 8px;
+    border-radius: 12px;
+  }
+
+  .chapter-name {
+    font-size: 0.84rem;
+  }
+
+  .chapter-hint,
+  .chapter-count,
+  .chapter-lock-mask {
+    font-size: 0.72rem;
+    line-height: 1.35;
+  }
+
+  .chapter-pass-badge,
+  .chapter-lock-badge {
+    font-size: 0.62rem;
+  }
+
+  #mobileChapterFold {
+    display: block;
+    position: fixed;
+    left: 0;
+    top: var(--mobile-top-offset);
+    z-index: 4200;
+    width: 36px;
+    height: 78px;
+    padding: 8px 0;
+    writing-mode: vertical-rl;
+    text-orientation: upright;
+    line-height: 1.05;
+    letter-spacing: 0.08em;
+    border-radius: 0 14px 14px 0;
+    font-size: 0.78rem;
+    font-weight: 900;
+  }
+
+  body.mobile-chapter-open #mobileChapterFold {
+    left: var(--mobile-drawer-w);
   }
 
   #main-panel {
@@ -648,16 +692,63 @@ body.chapter-collapsed .chapter-toggle {
     padding: 24px 16px;
   }
 
-  #top-actions button,
-  #controls button,
-  #speedSelect {
-    min-height: 42px;
-    padding: 9px 14px;
-    font-size: 1rem;
+  #top-actions {
+    width: 100%;
+    justify-content: flex-start;
+    flex-wrap: wrap;
+    gap: 8px;
   }
 
-  .progress-table {
-    min-width: 760px;
+  #top-actions button {
+    font-size: 0.78rem;
+  }
+
+  #speedSelect {
+    font-size: 0.82rem;
+  }
+
+  .practice-progress-top {
+    font-size: 0.88rem;
+  }
+
+  #practice-progress-delta {
+    font-size: 0.78rem;
+  }
+
+  #question {
+    font-size: clamp(1.72rem, 10vw, 2.58rem);
+    line-height: 1.12;
+  }
+
+  #answer { font-size: 1.08rem; }
+  #numberPadBtn { font-size: 0.9rem; }
+  .number-grid button { font-size: 1.05rem; }
+  #result { font-size: 1rem; }
+  #controls button { font-size: 0.92rem; }
+  #startBtn { font-size: 1.08rem; }
+  .view-title { font-size: 1.55rem; }
+}
+
+
+#chapter-overlay {
+  display: none;
+}
+
+#mobileChapterFold {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  #chapter-overlay {
+    position: fixed;
+    inset: var(--mobile-top-offset) 0 0 0;
+    z-index: 1400;
+    display: none;
+    background: rgba(0, 0, 0, 0.38);
+  }
+
+  body.mobile-chapter-open #chapter-overlay {
+    display: block;
   }
 }
 
@@ -3486,6 +3577,7 @@ body.mode-review #question .review-title-main {
       </section>
     </main>
   </div>
+  <button id="mobileChapterFold" type="button" aria-expanded="false" onclick="toggleChapterBox()">章节</button>
   <div id="chapter-overlay" onclick="closeMobileChapterBox()"></div>
 
   <div id="start-confirm" class="start-confirm hidden">
@@ -4357,29 +4449,33 @@ function migrateStorageToNormalizedKeys() {
   saveWrongState();
 }
 
-function updateMobileTopbarHeight() {
-  const topbar = document.getElementById("topbar");
-  const h = topbar ? Math.ceil(topbar.getBoundingClientRect().height) : 76;
-  document.documentElement.style.setProperty("--mobile-topbar-h", `${h}px`);
-}
-
 function isMobileLayout() {
-  return window.matchMedia("(max-width: 900px)").matches;
+  return window.matchMedia("(max-width: 720px)").matches;
 }
 
 function applyChapterCollapsed() {
   document.body.classList.toggle("chapter-collapsed", chapterCollapsed && !isMobileLayout());
 }
 
+function syncMobileFoldButton() {
+  const fold = document.getElementById("mobileChapterFold");
+  if (!fold) return;
+  const open = document.body.classList.contains("mobile-chapter-open");
+  fold.textContent = open ? "收起" : "章节";
+  fold.setAttribute("aria-expanded", open ? "true" : "false");
+}
+
 function closeMobileChapterBox() {
   mobileChapterOpen = false;
   document.body.classList.remove("mobile-chapter-open");
+  syncMobileFoldButton();
 }
 
 function toggleChapterBox() {
   if (isMobileLayout()) {
     mobileChapterOpen = !mobileChapterOpen;
     document.body.classList.toggle("mobile-chapter-open", mobileChapterOpen);
+    syncMobileFoldButton();
     return;
   }
   chapterCollapsed = !chapterCollapsed;
@@ -5421,6 +5517,13 @@ function setupProgressInfoTip() {
   });
 }
 
+document.getElementById("topbar")?.addEventListener("click", (event) => {
+  if (!isMobileLayout()) return;
+  const target = event.target;
+  if (!(target instanceof Element)) return;
+  if (target.closest("button") || target.closest("select")) closeMobileChapterBox();
+});
+
 function setupHelpTip() {
   const area = document.getElementById("help-area");
   const btn = document.getElementById("help-btn");
@@ -5466,13 +5569,12 @@ function setupHelpTip() {
 }
 
 window.addEventListener("resize", () => {
-  updateMobileTopbarHeight();
   if (!isMobileLayout()) closeMobileChapterBox();
   applyChapterCollapsed();
   updateChapterBox(false);
 });
 
-updateMobileTopbarHeight();
+syncMobileFoldButton();
 
 setMode(mode);
 updateTimeout();
