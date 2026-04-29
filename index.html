@@ -179,7 +179,7 @@ button:disabled {
 
 #layout {
   height: calc(100vh - var(--topbar-h));
-  margin-top: var(--topbar-h);
+  margin-top: var(--mobile-topbar-h);
   display: grid;
   grid-template-columns: var(--chapter-w) minmax(0, 1fr);
   gap: 20px;
@@ -742,6 +742,25 @@ body.chapter-collapsed .chapter-toggle {
   #chapter-overlay {
     position: fixed;
     inset: var(--mobile-top-offset) 0 0 0;
+    z-index: 1400;
+    display: none;
+    background: rgba(0, 0, 0, 0.38);
+  }
+
+  body.mobile-chapter-open #chapter-overlay {
+    display: block;
+  }
+}
+
+
+#chapter-overlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  #chapter-overlay {
+    position: fixed;
+    inset: var(--mobile-topbar-h) 0 0 0;
     z-index: 1400;
     display: none;
     background: rgba(0, 0, 0, 0.38);
