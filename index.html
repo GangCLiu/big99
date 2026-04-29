@@ -15,6 +15,9 @@
   --text: #f5f5f7;
   --muted: #aeb4bf;
   --topbar-h: 76px;
+  --mobile-topbar-h: 76px;
+  --mobile-chapter-w: min(78vw, 320px);
+  --mobile-handle-w: 40px;
   --chapter-w: 300px;
   --chapter-w-collapsed: 64px;
   --radius: 18px;
@@ -107,7 +110,7 @@ select {
   background: rgba(18, 19, 23, 0.96);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 1rem;
   line-height: 1.55;
   opacity: 0;
   visibility: hidden;
@@ -176,7 +179,7 @@ button:disabled {
 
 #layout {
   height: calc(100vh - var(--topbar-h));
-  margin-top: var(--topbar-h);
+  margin-top: var(--mobile-topbar-h);
   display: grid;
   grid-template-columns: var(--chapter-w) minmax(0, 1fr);
   gap: 20px;
@@ -245,7 +248,7 @@ body.chapter-collapsed #layout {
 
 .chapter-total {
   color: var(--muted);
-  font-size: 0.92rem;
+  font-size: 1rem;
   margin-bottom: 12px;
 }
 
@@ -557,6 +560,10 @@ body.chapter-collapsed .chapter-toggle {
     overflow: auto;
   }
 
+  body.mobile-chapter-open {
+    overflow: hidden;
+  }
+
   #topbar {
     position: sticky;
     height: auto;
@@ -586,25 +593,59 @@ body.chapter-collapsed .chapter-toggle {
   }
 
   #chapter-box {
-    min-height: 56px;
+    position: fixed;
+    top: var(--mobile-topbar-h);
+    z-index: 1500;
+    width: var(--mobile-chapter-w);
+    max-width: 320px;
+    max-height: calc(100vh - var(--mobile-topbar-h) - 18px);
+    border-radius: 0 16px 16px 0;
+    left: calc(-1 * (var(--mobile-chapter-w) - var(--mobile-handle-w)));
+    opacity: 1;
+    pointer-events: auto;
+    transition: left 0.2s ease;
   }
 
-  body.chapter-collapsed #chapter-box {
-    height: 56px;
+  body.mobile-chapter-open #chapter-box {
+    left: 0;
   }
 
-  body.chapter-collapsed .chapter-head {
-    justify-content: space-between;
-    padding: 8px 12px;
+  .chapter-head {
+    padding: 10px 12px;
   }
 
-  body.chapter-collapsed .chapter-title {
-    display: block;
+  .chapter-title {
+    font-size: 1rem;
+  }
+
+  .chapter-list {
+    max-height: calc(100vh - var(--mobile-topbar-h) - 84px);
+  }
+
+  .chapter-toggle {
+    position: fixed;
+    top: calc(var(--mobile-topbar-h) + 8px);
+    left: 0;
+    z-index: 1600;
+    width: var(--mobile-handle-w);
+    height: 96px;
+    min-height: 96px;
+    padding: 8px 6px;
+    border-radius: 0 12px 12px 0;
+    writing-mode: vertical-rl;
+    letter-spacing: 0.12em;
+    font-size: 1rem;
+    line-height: 1;
+    transition: left 0.2s ease;
+  }
+
+  body.mobile-chapter-open .chapter-toggle {
+    left: var(--mobile-chapter-w);
   }
 
   #main-panel {
-    min-height: 62vh;
-    padding: 22px 14px;
+    min-height: 68vh;
+    padding: 24px 16px;
   }
 
   #top-actions button,
@@ -617,6 +658,25 @@ body.chapter-collapsed .chapter-toggle {
 
   .progress-table {
     min-width: 760px;
+  }
+}
+
+
+#chapter-overlay {
+  display: none;
+}
+
+@media (max-width: 900px) {
+  #chapter-overlay {
+    position: fixed;
+    inset: var(--mobile-topbar-h) 0 0 0;
+    z-index: 1400;
+    display: none;
+    background: rgba(0, 0, 0, 0.38);
+  }
+
+  body.mobile-chapter-open #chapter-overlay {
+    display: block;
   }
 }
 
@@ -838,7 +898,7 @@ body.chapter-collapsed .chapter-toggle {
   background: rgba(18, 19, 23, 0.96);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 1rem;
   line-height: 1.55;
   opacity: 0;
   visibility: hidden;
@@ -1959,7 +2019,7 @@ body.mode-review .wrong-list {
   border-radius: 999px;
   background: #f1f1f4;
   color: #111318;
-  font-size: 0.92rem;
+  font-size: 1rem;
   font-weight: 850;
   letter-spacing: 0.04em;
 }
@@ -2900,7 +2960,7 @@ body.mode-review.practice-started #question .review-title-wrap {
   background: rgba(18, 19, 23, 0.96);
   box-shadow: 0 18px 60px rgba(0, 0, 0, 0.48);
   color: var(--text);
-  font-size: 0.92rem;
+  font-size: 1rem;
   line-height: 1.55;
   text-align: left;
 }
@@ -3133,7 +3193,7 @@ body.mode-review #question .review-title-main {
 
 .usage-timeline span {
   color: #cdd2dc;
-  font-size: 0.92rem;
+  font-size: 1rem;
 }
 
 .dot {
@@ -3426,6 +3486,7 @@ body.mode-review #question .review-title-main {
       </section>
     </main>
   </div>
+  <div id="chapter-overlay" onclick="closeMobileChapterBox()"></div>
 
   <div id="start-confirm" class="start-confirm hidden">
     <div class="start-confirm-card">
@@ -3504,6 +3565,7 @@ let currentIsWrongProblem = false;
 let currentChapterIndex = parseInt(localStorage.getItem("currentChapterIndex") || "0", 10);
 let currentOrderedPosition = -1;
 let chapterCollapsed = localStorage.getItem("chapterCollapsed") === "1";
+let mobileChapterOpen = false;
 let progressFilter = localStorage.getItem("progressFilter") || "all";
 let practiceStats = { correctExtra: 0, totalExtra: 0, streak: 0 };
 let reviewSessionKeys = [];
@@ -4295,11 +4357,31 @@ function migrateStorageToNormalizedKeys() {
   saveWrongState();
 }
 
+function updateMobileTopbarHeight() {
+  const topbar = document.getElementById("topbar");
+  const h = topbar ? Math.ceil(topbar.getBoundingClientRect().height) : 76;
+  document.documentElement.style.setProperty("--mobile-topbar-h", `${h}px`);
+}
+
+function isMobileLayout() {
+  return window.matchMedia("(max-width: 900px)").matches;
+}
+
 function applyChapterCollapsed() {
-  document.body.classList.toggle("chapter-collapsed", chapterCollapsed);
+  document.body.classList.toggle("chapter-collapsed", chapterCollapsed && !isMobileLayout());
+}
+
+function closeMobileChapterBox() {
+  mobileChapterOpen = false;
+  document.body.classList.remove("mobile-chapter-open");
 }
 
 function toggleChapterBox() {
+  if (isMobileLayout()) {
+    mobileChapterOpen = !mobileChapterOpen;
+    document.body.classList.toggle("mobile-chapter-open", mobileChapterOpen);
+    return;
+  }
   chapterCollapsed = !chapterCollapsed;
   localStorage.setItem("chapterCollapsed", chapterCollapsed ? "1" : "0");
   applyChapterCollapsed();
@@ -4330,6 +4412,7 @@ function selectChapter(chapterIndex) {
     showLockHint();
     return;
   }
+  if (isMobileLayout()) closeMobileChapterBox();
   currentChapterIndex = chapterIndex;
   currentOrderedPosition = -1;
   chapterCollapsed = true;
@@ -4403,7 +4486,7 @@ function updateChapterBox(preserveScroll = true) {
   let html = `<div class="chapter-inner">`;
   html += `<div class="chapter-head">`;
   html += `<div class="chapter-title">章节顺序</div>`;
-  html += `<button class="chapter-toggle" type="button" onclick="toggleChapterBox()" aria-label="展开或收回章节栏">${chapterCollapsed ? "›" : "‹"}</button>`;
+  html += `<button class="chapter-toggle" type="button" onclick="toggleChapterBox()" aria-label="展开或收回章节栏">${isMobileLayout() ? "章节" : (chapterCollapsed ? "›" : "‹")}</button>`;
   html += `</div>`;
   html += `<div class="chapter-list">`;
 
@@ -5381,6 +5464,15 @@ function setupHelpTip() {
     if (area.classList.contains("show")) scheduleHide();
   });
 }
+
+window.addEventListener("resize", () => {
+  updateMobileTopbarHeight();
+  if (!isMobileLayout()) closeMobileChapterBox();
+  applyChapterCollapsed();
+  updateChapterBox(false);
+});
+
+updateMobileTopbarHeight();
 
 setMode(mode);
 updateTimeout();
